@@ -1099,6 +1099,36 @@ function triggerState(state) {
   // 🔥 CALL YOUR REAL SYSTEM
   activateSystemState(state);
         // --- END HABIT ENGINE ---// 
+} function quickState(state) {
+
+  const actions = {
+    yellow: "Slow down. One thing.",
+    red: "STOP. Breathe now.",
+    orange: "Look around. You are safe.",
+    purple: "Write everything.",
+    blue: "Rest. No pressure."
+  };
+
+  document.getElementById("quick-output").innerHTML =
+    actions[state] + " • This is temporary";
+
+  // connect to your system
+  if (typeof activateSystemState === "function") {
+    activateSystemState(state);
+  }
+
+  // auto actions
+  if (state === "red") startBreathing();
+}
+
+function startBreathing() {
+  let inhale = true;
+
+  setInterval(() => {
+    document.getElementById("quick-output").innerHTML =
+      inhale ? "INHALE" : "EXHALE";
+    inhale = !inhale;
+  }, 4000);
 }
     </script>
 </body>
