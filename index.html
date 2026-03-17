@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Return</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system;
+      background: #0f1115;
+      color: #e8e6e3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .btn {
+      display: block;
+      margin: 10px;
+      padding: 15px;
+      border-radius: 15px;
+      color: white;
+      border: none;
+      width: 200px;
+      font-size: 18px;
+    }
+    .y { background: #bfa76f; }
+    .r { background: #b85c5c; }
+    .o { background: #c98a4b; }
+    .p { background: #8b6fa8; }
+    .b { background: #5f7c99; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div id="home">
+    <h2>be still</h2>
+    <button class="btn y" onclick="show('static')">🟡 static</button>
+    <button class="btn r" onclick="show('heat')">🔴 heat</button>
+    <button class="btn o" onclick="show('threat')">🟠 threat</button>
+    <button class="btn p" onclick="show('pressure')">🟣 pressure</button>
+    <button class="btn b" onclick="show('gravity')">🔵 gravity</button>
+  </div>
+
+  <div id="state" style="display:none;">
+    <p id="text"></p>
+    <button onclick="next()">continue</button>
+  </div>
+
+  <div id="next" style="display:none;">
+    <p>just begin<br>one small step<br>God meets you here</p>
+    <button onclick="home()">done</button>
+  </div>
+</div>
+
+<script>
+function show(state) {
+  document.getElementById("home").style.display = "none";
+  document.getElementById("state").style.display = "block";
+
+  let text = "";
+
+  if (state === "heat") text = "you are overwhelmed<br>God is near<br><br>breathe and wait";
+  if (state === "threat") text = "you are safe enough<br><br>look around";
+  if (state === "pressure") text = "you don’t need to solve everything<br><br>next 5 minutes";
+  if (state === "gravity") text = "you are tired<br><br>rest or move gently";
+  if (state === "static") text = "too much input<br><br>choose one thing";
+
+  document.getElementById("text").innerHTML = text;
+}
+
+function next() {
+  document.getElementById("state").style.display = "none";
+  document.getElementById("next").style.display = "block";
+}
+
+function home() {
+  document.getElementById("next").style.display = "none";
+  document.getElementById("home").style.display = "block";
+}
+</script>
+
+</body>
+</html>
