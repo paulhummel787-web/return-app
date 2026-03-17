@@ -16,7 +16,7 @@ body{
  background:#050505;
 }
 
-/* 🌌 BACKGROUND */
+/* 🌌 GLOW */
 #glow{
  position:fixed;
  width:200%;
@@ -29,7 +29,7 @@ body{
 
 @keyframes drift{
  0%{transform:translate(0,0);}
- 50%{transform:translate(40px,40px);}
+ 50%{transform:translate(30px,30px);}
  100%{transform:translate(0,0);}
 }
 
@@ -40,7 +40,7 @@ body{
  height:3px;
  background:white;
  border-radius:50%;
- opacity:.2;
+ opacity:.15;
  animation: float linear infinite;
 }
 
@@ -56,6 +56,7 @@ body{
  border:1px solid rgba(255,255,255,0.2);
  transform:translate(-50%,-50%);
  animation:ripple 1s ease-out forwards;
+ pointer-events:none;
 }
 
 @keyframes ripple{
@@ -63,7 +64,7 @@ body{
  to{width:200px;height:200px;opacity:0;}
 }
 
-/* APP */
+/* UI */
 #app{position:relative;z-index:2;max-width:360px;width:100%;text-align:center;}
 
 .choice{
@@ -74,14 +75,14 @@ body{
 }
 
 .breath{
- width:160px;height:160px;margin:20px auto;border-radius:50%;
+ width:150px;height:150px;margin:20px auto;border-radius:50%;
  background:radial-gradient(circle,rgba(255,255,255,0.15),transparent);
  animation:breathe 8s infinite ease-in-out;
 }
 
 @keyframes breathe{
  0%{transform:scale(.8);}
- 50%{transform:scale(1.3);}
+ 50%{transform:scale(1.25);}
  100%{transform:scale(.8);}
 }
 
@@ -96,7 +97,7 @@ body{
 </style>
 </head>
 
-<body onclick="createRipple(event)">
+<body>
 
 <div id="glow"></div>
 
@@ -106,14 +107,20 @@ body{
 <div id="home">
 <h2>return</h2>
 <div class="choice" onclick="nav('select')">begin</div>
-<div class="choice" onclick="toggleSound()">sound on/off</div>
+<div class="choice" onclick="toggleSound()">sound</div>
 </div>
 
 <!-- SELECT -->
 <div id="select" style="display:none;">
 <h2>what are you feeling</h2>
 
-<div class="choice" onclick="start()">enter</div>
+<div class="choice" onclick="start(['heat'])">overwhelmed</div>
+<div class="choice" onclick="start(['threat'])">anxious</div>
+<div class="choice" onclick="start(['pressure'])">pressure</div>
+<div class="choice" onclick="start(['gravity'])">low</div>
+<div class="choice" onclick="start(['static'])">scattered</div>
+
+<button class="small" onclick="nav('home')">back</button>
 </div>
 
 <!-- FLOW -->
@@ -127,7 +134,7 @@ body{
 <script>
 
 // 🌌 PARTICLES
-for(let i=0;i<40;i++){
+for(let i=0;i<35;i++){
  let p=document.createElement("div");
  p.className="particle";
  p.style.left=Math.random()*100+"vw";
@@ -135,38 +142,61 @@ for(let i=0;i<40;i++){
  document.body.appendChild(p);
 }
 
-// 👆 RIPPLE EFFECT
-function createRipple(e){
+// 👆 RIPPLE (only on background)
+document.body.addEventListener("click", function(e){
+ if(e.target.classList.contains("choice") || e.target.classList.contains("small")) return;
+
  let r=document.createElement("div");
  r.className="ripple";
  r.style.left=e.clientX+"px";
  r.style.top=e.clientY+"px";
  document.body.appendChild(r);
  setTimeout(()=>r.remove(),1000);
-}
+});
 
 // NAV
 function nav(id){
+ clearInterval(interval);
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
 }
 
-// FLOW
-function start(){
+// 🌊 FLOW
+let steps=[],i=0,interval;
+
+function start(state){
  nav("flow");
- steps=["pause","breathe slowly","you are safe","stay here"];
+ build(state);
  i=0;
  run();
 }
 
-let steps=[],i=0,int;
+function build(state){
+ steps=[];
+
+ if(state.includes("heat")){
+  steps.push("this is a lot");
+  steps.push("your system is overwhelmed");
+ }
+
+ if(state.includes("threat")){
+  steps.push("your mind is trying to protect you");
+ }
+
+ steps.push("slow your breathing");
+ steps.push("you are safe");
+ steps.push("stay here");
+}
 
 function run(){
  show();
- int=setInterval(()=>{
+ interval=setInterval(()=>{
   i++;
-  if(i<steps.length) show();
-  else nav("home");
+  if(i<steps.length){
+   show();
+  } else {
+   nav("home");
+  }
  },4000);
 }
 
@@ -174,24 +204,26 @@ function show(){
  document.getElementById("text").innerText=steps[i];
 }
 
-// 🎧 SOUND (AMBIENT)
-let audioCtx,osc,gainNode;
+// 🎧 SOUND (FIXED FOR iPHONE)
+let audioCtx=null;
 
 function toggleSound(){
  if(!audioCtx){
   audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  osc=audioCtx.createOscillator();
-  gainNode=audioCtx.createGain();
+
+  let osc=audioCtx.createOscillator();
+  let gain=audioCtx.createGain();
 
   osc.type="sine";
   osc.frequency.value=110;
 
-  gainNode.gain.value=0.02;
+  gain.gain.value=0.02;
 
-  osc.connect(gainNode);
-  gainNode.connect(audioCtx.destination);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
 
   osc.start();
+
  } else {
   audioCtx.close();
   audioCtx=null;
