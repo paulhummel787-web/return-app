@@ -71,76 +71,79 @@ h2 {
 </div>
 
 <script>
+let steps = [];
+let currentStep = 0;
+
 function show(state) {
   document.getElementById("home").style.display = "none";
   document.getElementById("state").style.display = "block";
 
-  let text = "";
-
   if (state === "heat") {
-    text = `
-you feel overwhelmed
-
-pause
-
-breathe in slowly  
-hold  
-release  
-
-you are not in danger  
-
-God is near to you
-`;
+    steps = [
+      "you feel overwhelmed",
+      "pause",
+      "breathe in slowly",
+      "hold",
+      "release",
+      "you are not in danger",
+      "God is near to you"
+    ];
   }
 
   if (state === "threat") {
-    text = `
-something feels wrong
-
-look around
-
-you are safe enough
-
-come back to the present
-`;
+    steps = [
+      "something feels wrong",
+      "look around",
+      "name 3 things you see",
+      "you are safe enough",
+      "come back to the present"
+    ];
   }
 
   if (state === "pressure") {
-    text = `
-too much at once
-
-you don’t need to solve everything
-
-just the next 5 minutes
-`;
+    steps = [
+      "too much at once",
+      "you don’t need to solve everything",
+      "just the next 5 minutes",
+      "start small"
+    ];
   }
 
   if (state === "gravity") {
-    text = `
-you feel heavy
-
-that’s okay
-
-rest or move gently
-`;
+    steps = [
+      "you feel heavy",
+      "that’s okay",
+      "rest or move gently",
+      "you don’t need to push right now"
+    ];
   }
 
   if (state === "static") {
-    text = `
-too much input
-
-slow down
-
-choose one thing
-`;
+    steps = [
+      "too much input",
+      "slow down",
+      "one thing at a time",
+      "choose what matters most"
+    ];
   }
 
-  document.getElementById("text").innerText = text;
+  currentStep = 0;
+  showStep();
+}
+
+function showStep() {
+  document.getElementById("text").innerText = steps[currentStep];
 }
 
 function next() {
-  document.getElementById("state").style.display = "none";
-  document.getElementById("next").style.display = "block";
+  currentStep++;
+
+  if (currentStep < steps.length) {
+    showStep();
+  } else {
+    document.getElementById("state").style.display = "none";
+    document.getElementById("next").style.display = "block";
+  }
 }
 
 function home() {
