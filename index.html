@@ -16,37 +16,20 @@ body{
  background:#050505;
 }
 
-/* 🌌 BACKGROUND GLOW */
+/* 🌌 BACKGROUND */
 #glow{
  position:fixed;
  width:200%;
  height:200%;
  top:-50%;
  left:-50%;
- background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 60%);
+ background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%);
  animation: drift 25s infinite linear;
-}
-
-/* 🌫 FOG */
-#fog{
- position:fixed;
- width:200%;
- height:200%;
- top:-50%;
- left:-50%;
- background: radial-gradient(circle, rgba(255,255,255,0.03), transparent 70%);
- animation: drift2 40s infinite linear;
 }
 
 @keyframes drift{
  0%{transform:translate(0,0);}
  50%{transform:translate(40px,40px);}
- 100%{transform:translate(0,0);}
-}
-
-@keyframes drift2{
- 0%{transform:translate(0,0);}
- 50%{transform:translate(-30px,20px);}
  100%{transform:translate(0,0);}
 }
 
@@ -66,14 +49,22 @@ body{
  to{transform:translateY(-10vh);}
 }
 
-/* APP */
-#app{
- position:relative;
- z-index:2;
- max-width:360px;
- width:100%;
- text-align:center;
+/* 👆 RIPPLE */
+.ripple{
+ position:fixed;
+ border-radius:50%;
+ border:1px solid rgba(255,255,255,0.2);
+ transform:translate(-50%,-50%);
+ animation:ripple 1s ease-out forwards;
 }
+
+@keyframes ripple{
+ from{width:0;height:0;opacity:.6;}
+ to{width:200px;height:200px;opacity:0;}
+}
+
+/* APP */
+#app{position:relative;z-index:2;max-width:360px;width:100%;text-align:center;}
 
 .choice{
  margin:10px 0;
@@ -82,9 +73,6 @@ body{
  background:rgba(255,255,255,0.05);
 }
 
-.active{background:rgba(255,255,255,0.2);}
-
-/* 🌬 BREATH FIELD */
 .breath{
  width:160px;height:160px;margin:20px auto;border-radius:50%;
  background:radial-gradient(circle,rgba(255,255,255,0.15),transparent);
@@ -108,10 +96,9 @@ body{
 </style>
 </head>
 
-<body>
+<body onclick="createRipple(event)">
 
 <div id="glow"></div>
-<div id="fog"></div>
 
 <div id="app">
 
@@ -119,21 +106,14 @@ body{
 <div id="home">
 <h2>return</h2>
 <div class="choice" onclick="nav('select')">begin</div>
-<div class="choice" onclick="nav('chat')">talk</div>
-<div class="choice" onclick="insight()">insight</div>
+<div class="choice" onclick="toggleSound()">sound on/off</div>
 </div>
 
 <!-- SELECT -->
 <div id="select" style="display:none;">
 <h2>what are you feeling</h2>
 
-<div class="choice" onclick="toggle('heat',this)">overwhelmed</div>
-<div class="choice" onclick="toggle('threat',this)">anxious</div>
-<div class="choice" onclick="toggle('pressure',this)">pressure</div>
-<div class="choice" onclick="toggle('gravity',this)">low</div>
-<div class="choice" onclick="toggle('static',this)">scattered</div>
-
-<button class="small" onclick="start()">enter</button>
+<div class="choice" onclick="start()">enter</div>
 </div>
 
 <!-- FLOW -->
@@ -142,29 +122,11 @@ body{
 <div id="text"></div>
 </div>
 
-<!-- CHAT -->
-<div id="chat" style="display:none;">
-<h2>talk</h2>
-<div id="chatBox"></div>
-<input id="input">
-<button class="small" onclick="send()">send</button>
-<button class="small" onclick="nav('home')">back</button>
-</div>
-
-<!-- INSIGHT -->
-<div id="insight" style="display:none;">
-<h2>pattern</h2>
-<div id="insightText"></div>
-<button class="small" onclick="nav('home')">back</button>
-</div>
-
 </div>
 
 <script>
 
-let selected=[],steps=[],i=0,interval;
-
-// 🌌 CREATE PARTICLES
+// 🌌 PARTICLES
 for(let i=0;i<40;i++){
  let p=document.createElement("div");
  p.className="particle";
@@ -173,60 +135,35 @@ for(let i=0;i<40;i++){
  document.body.appendChild(p);
 }
 
+// 👆 RIPPLE EFFECT
+function createRipple(e){
+ let r=document.createElement("div");
+ r.className="ripple";
+ r.style.left=e.clientX+"px";
+ r.style.top=e.clientY+"px";
+ document.body.appendChild(r);
+ setTimeout(()=>r.remove(),1000);
+}
+
 // NAV
 function nav(id){
- clearInterval(interval);
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
 }
 
-// SELECT
-function toggle(s,el){
- if(selected.includes(s)){
-  selected=selected.filter(x=>x!==s);
-  el.classList.remove("active");
- } else {
-  selected.push(s);
-  el.classList.add("active");
- }
-}
-
-// 🌈 MOOD COLORS
-function setMood(){
- let glow=document.getElementById("glow");
-
- if(selected.includes("heat"))
-  glow.style.background="radial-gradient(circle,#ff6a3d22,transparent 60%)";
-
- if(selected.includes("threat"))
-  glow.style.background="radial-gradient(circle,#6a7dff22,transparent 60%)";
-
- if(selected.includes("gravity"))
-  glow.style.background="radial-gradient(circle,#111,transparent 60%)";
-}
-
-// START
-function start(){
- setMood();
- nav("flow");
- build();
- i=0;
- runFlow();
-}
-
 // FLOW
-function build(){
- steps=[
-  "pause",
-  "breathe slowly",
-  "you are safe",
-  "stay here"
- ];
+function start(){
+ nav("flow");
+ steps=["pause","breathe slowly","you are safe","stay here"];
+ i=0;
+ run();
 }
 
-function runFlow(){
+let steps=[],i=0,int;
+
+function run(){
  show();
- interval=setInterval(()=>{
+ int=setInterval(()=>{
   i++;
   if(i<steps.length) show();
   else nav("home");
@@ -235,30 +172,30 @@ function runFlow(){
 
 function show(){
  document.getElementById("text").innerText=steps[i];
- speak(steps[i]);
 }
 
-// VOICE
-function speak(t){
- let m=new SpeechSynthesisUtterance(t);
- m.rate=0.8;
- speechSynthesis.cancel();
- speechSynthesis.speak(m);
-}
+// 🎧 SOUND (AMBIENT)
+let audioCtx,osc,gainNode;
 
-// CHAT
-function send(){
- let input=document.getElementById("input").value;
- let box=document.getElementById("chatBox");
+function toggleSound(){
+ if(!audioCtx){
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  osc=audioCtx.createOscillator();
+  gainNode=audioCtx.createGain();
 
- box.innerHTML+="<div>"+input+"</div><div style='opacity:.6'>i hear you. slow down. you're okay.</div>";
- document.getElementById("input").value="";
-}
+  osc.type="sine";
+  osc.frequency.value=110;
 
-// INSIGHT
-function insight(){
- nav("insight");
- document.getElementById("insightText").innerText="patterns forming...";
+  gainNode.gain.value=0.02;
+
+  osc.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+
+  osc.start();
+ } else {
+  audioCtx.close();
+  audioCtx=null;
+ }
 }
 
 </script>
