@@ -1,52 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Architect OS ∞ v6.3</title>
+
+<style>
+:root { 
+    --accent: #3b82f6; 
+    --danger: #ef4444; 
+    --recovery: #ffaa00;
+    --night: #a855f7;
+}
+
+body { 
+    margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+    background:#020617; color:white; overflow:hidden; 
+}
+
+#app { padding:20px; max-width:420px; margin:auto; position:relative; z-index:10; height: 100vh; overflow-y: auto; scrollbar-width: none;}
+#app::-webkit-scrollbar { display: none; }
+
+.card { 
+    background:rgba(255, 255, 255, 0.03); padding:20px; border-radius:20px; 
+    border:1px solid rgba(255,255,255,0.05); margin-bottom:15px; backdrop-filter:blur(10px);
+}
+
+.btn { 
+    padding:16px; margin:10px 0; border-radius:14px; 
+    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
+    cursor:pointer; text-transform:uppercase; font-size:12px; letter-spacing:1px; transition: 0.2s;
+}
+.btn:active { transform: scale(0.96); background:rgba(255,255,255,0.1); }
+
+input { 
+    width:85%; background:transparent; border:none; border-bottom:1px solid #333; 
+    color:white; padding:12px; margin:15px 0; text-align:center; font-size:18px; outline:none;
+}
+
+#shroud { 
+    position:fixed; top:0; left:0; width:100%; height:100%; background:#000; 
+    display:none; flex-direction:column; justify-content:center; align-items:center; z-index:100;
+}
+
+#timer { font-size:70px; font-weight:100; font-variant-numeric: tabular-nums; margin:20px 0; }
+.small { font-size:10px; opacity:0.5; letter-spacing:1px; text-transform:uppercase; }
+.level { font-size:14px; color:var(--accent); font-weight:bold; letter-spacing:2px; margin-bottom:5px; }
+canvas { position:fixed; top:0; left:0; z-index:1; }
+
+/* Pulse Animations */
+@keyframes pulse { from { border-color: rgba(255,170,0,0.2); } to { border-color: rgba(255,170,0,0.6); } }
+.recovery-pulse { animation: pulse 3s infinite alternate; }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div id="app">
+    <div style="margin-top:30px; text-align:center;">
+        <div id="level" class="level">INITIATE</div>
+        <h2 style="font-weight:200; letter-spacing:6px; margin:0;">ARCHITECT ∞</h2>
+        <div id="streak" class="small" style="margin-top:8px">STREAK: 0 DAYS</div>
+    </div>
+
+    <div id="recoveryCard" class="card recovery-pulse" style="display:none; border-color: var(--recovery);">
+        <p class="small" style="color: var(--recovery);">⚠️ Recovery Ripple Active</p>
+        <p style="font-size:12px;">Streak reset detected. Stabilization phase engaged.</p>
+        <div class="btn" onclick="activateStabilization()" style="border-color: var(--recovery);">Acknowledge Grace</div>
+    </div>
+
+    <div id="launchpadSection" class="card" style="display:none;">
+        <p class="small">Morning Launchpad</p>
+        <div style="text-align:left; display:inline-block; margin:15px 0; font-size:14px;">
+            <label><input type="checkbox" class="launch-check"> Keys & Wallet</label><br>
+            <label><input type="checkbox" class="launch-check"> Water Intake Initiated</label><br>
+            <label><input type="checkbox" class="launch-check"> Phone Cleaned/Charged</label>
+        </div>
+        <div class="btn" onclick="closeLaunchpad()">System Ready</div>
+    </div>
+
+    <div class="card">
+        <input id="foxInput" placeholder="Identify Fox" autocomplete="off">
+        <div class="btn" onclick="startHunt('red')" style="border-left:4px solid var(--danger);">🔴 Intense Hunt</div>
+        <div class="btn" onclick="startHunt('blue')" style="border-left:4px solid var(--accent);">🔵 Low Energy</div>
+    </div>
+
+    <div id="nightlyReflection" class="card" style="display:none; border-color: var(--night);">
+        <p class="small" style="color: var(--night);">🟣 Nightly Descent</p>
+        <div class="btn" onclick="alert('Open Descent Tab and clear all mental RAM.')" style="border-color: var(--night);">Empty RAM for Sleep</div>
+    </div>
+
+    <div id="insight" class="small" style="text-align:center; margin:20px 0; min-height:12px;"></div>
+
+    <div style="margin-top:20px;">
+        <div class="btn" onclick="generatePilotLog()" style="opacity:0.6;">Generate Pilot's Log</div>
+        <div class="btn" onclick="sendSafetySignal()" style="opacity:0.3; font-size:9px;">Send Offline Signal</div>
+    </div>
+</div>
+
+<div id="shroud">
+    <div id="anchor" class="small" style="margin-bottom:20px; font-style:italic;"></div>
+    <div id="step" style="font-size:22px; font-weight:300; padding:0 40px; line-height:1.4;"></div>
+    <div id="timer">--:--</div>
+    <div style="display:flex; gap:10px;">
+        <div class="btn" style="width:140px;" onclick="nextStep()">Next</div>
+        <div class="btn" style="width:140px; border-color:var(--danger);" onclick="endSession(false)">Abort</div>
+    </div>
+</div>
+
 <script>
-let steps=[], i=0, timer, currentType='';
+let steps=[], i=0, timer;
 
 const baseProtocols={
-    red: ["Splash ice water on face", "Drink 8oz Water", "Clear visual field"],
-    blue: ["Check weighted blanket", "Dim the lights", "10-second posture reset"]
+    red: ["Ice water to face", "Drink 8oz water", "Clear visual field"],
+    blue: ["Dim lights", "Posture reset", "One slow exhale"]
 };
 
 const anchors = {
-    red: "Be still. Logic is offline. Move the body.",
-    blue: "Rest is a designated task. Gravity is high."
+    red: "Logic is offline. Trust the movement.",
+    blue: "Rest is a designated task."
 };
 
+// --- PREDICTIVE ENGINE ---
 function predictAdjustments(){
     let data=JSON.parse(localStorage.sessions||"[]");
     let recent=data.slice(-10);
-    let failRate=recent.filter(s=>!s.completed).length/(recent.length||1);
+    let failRate=recent.length ? recent.filter(s=>!s.completed).length/recent.length : 0;
     let hour=new Date().getHours();
-    
     let adj=[];
-    if(failRate > 0.5) adj.push("AUTO-REDUCE: Minimum Viable Shift Active");
-    if(hour > 22 || hour < 6) adj.push("NIGHT MODE: Focus on Reset only");
+    if(failRate > 0.4) adj.push("AUTO-REDUCE ACTIVE");
+    if(hour > 21 || hour < 5) adj.push("NIGHT MODE");
     return adj;
 }
 
+// --- HUNT ENGINE & UNZIPPER ---
 function startHunt(type){
-    currentType = type;
-    let fox = document.getElementById('foxInput').value || "Execution";
-    
-    // THE UNZIPPER INTERCEPT
-    let unzip = prompt("UNZIPPER: List 3 physical movements for '" + fox + "':", "Step 1, Step 2, Step 3");
-    let physicalSteps = unzip ? unzip.split(',').map(s => s.trim()) : ["Engage first movement"];
+    if (localStorage.getItem('stabilizationActive') === 'true' && type === 'red') {
+        if (!confirm("Recovery Active. Intense tasks blocked. Proceed anyway?")) return;
+    }
 
-    let adjustments = predictAdjustments();
-    
-    // BUILD FINAL SEQUENCE
-    steps = [...adjustments, ...baseProtocols[type], ...physicalSteps, "2 min: " + fox];
+    let fox = document.getElementById('foxInput').value || "Execution";
+    let unzip = prompt("UNZIPPER: List 3 sub-steps (comma separated):", "Step 1, Step 2, Step 3");
+    let physicalSteps = unzip ? unzip.split(',').map(s=>s.trim()).filter(Boolean) : ["Begin movement"];
+
+    let adj = predictAdjustments();
+    steps = [...adj, ...baseProtocols[type], ...physicalSteps, "2 Min Sprint: " + fox];
     
     i=0;
     document.getElementById('shroud').style.display='flex';
     document.getElementById('anchor').innerText = anchors[type];
     runStep();
-    logStart(type);
+    logStart(type, fox);
 }
 
 function runStep(){
     document.getElementById('step').innerText=steps[i];
-    // Timer triggers for the final sprint
-    if(steps[i].includes('2 min')) startTimer(120);
+    if(steps[i].includes('2 Min')) startTimer(120);
     else document.getElementById('timer').innerText = "--:--";
 }
 
@@ -64,23 +174,27 @@ function startTimer(s){
         document.getElementById('timer').innerText = `${m}:${sec<10?'0':''}${sec}`;
         if(t--<=0){
             clearInterval(timer);
-            if(navigator.vibrate) navigator.vibrate([300, 100, 300]); // Haptic nudge
+            if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
             document.getElementById('timer').innerText = "DONE";
         }
     },1000);
 }
 
+// --- SESSION LOGIC ---
 function endSession(success){
     document.getElementById('shroud').style.display='none';
     clearInterval(timer);
-    if(success) updateStreak();
+    if(success) {
+        updateStreak();
+        localStorage.removeItem('stabilizationActive');
+    }
     logEnd(success);
     updateUI();
 }
 
-function logStart(type){
+function logStart(type, fox){
     let d=JSON.parse(localStorage.sessions||"[]");
-    d.push({t:Date.now(), type, completed:false});
+    d.push({t:Date.now(), type, fox, completed:false});
     localStorage.sessions=JSON.stringify(d);
 }
 
@@ -90,6 +204,7 @@ function logEnd(success){
     localStorage.sessions=JSON.stringify(d);
 }
 
+// --- CORE OS FUNCTIONS ---
 function updateStreak(){
     let today=new Date().toDateString();
     if(localStorage.last!=today){
@@ -110,40 +225,81 @@ function updateUI(){
     document.getElementById('streak').innerText="STREAK: "+(localStorage.streak||0)+" DAYS";
     document.getElementById('level').innerText=getLevel();
     
+    // Recovery Check
+    const lastDate = localStorage.getItem('last');
+    const today = new Date().toDateString();
+    if (lastDate && lastDate !== today) {
+        let diff = Math.floor((new Date() - new Date(lastDate)) / 86400000);
+        if (diff > 1) {
+            document.getElementById('recoveryCard').style.display = 'block';
+            localStorage.setItem('stabilizationActive', 'true');
+        }
+    }
+
+    // Nightly Check
+    const hour = new Date().getHours();
+    document.getElementById('nightlyReflection').style.display = (hour >= 21 || hour < 4) ? 'block' : 'none';
+
+    // Morning Launchpad Check
+    if (localStorage.lastLaunch !== today) document.getElementById('launchpadSection').style.display = 'block';
+
+    // Insight Logic
     let d=JSON.parse(localStorage.sessions||"[]");
     if(d.length > 3){
         let fails = d.filter(s=>!s.completed).length;
-        let rate = Math.round((fails/d.length)*100);
-        document.getElementById('insight').innerText = rate > 40 ? "ANALYSIS: HIGH FRICTION — SIMPLIFY NEXT" : "ANALYSIS: STABLE FLOW";
+        document.getElementById('insight').innerText = (fails/d.length > 0.4) ? "ANALYSIS: HIGH FRICTION — SIMPLIFY" : "ANALYSIS: SYSTEM STABLE";
     }
 }
 
-function sendSafetySignal(){
-    window.location.href = `sms:?&body=${encodeURIComponent("Architect Protocol: I am at Level 0. Going offline to recover. I am safe.")}`;
+function activateStabilization(){
+    localStorage.setItem('stabilizationActive', 'true');
+    document.getElementById('recoveryCard').style.display = 'none';
+    alert("Stabilization active: Blue hunts only for 24h.");
 }
 
-// THE BACKGROUND STARS
+function closeLaunchpad(){
+    let checks = document.querySelectorAll('.launch-check');
+    if (Array.from(checks).every(c => c.checked)) {
+        localStorage.lastLaunch = new Date().toDateString();
+        document.getElementById('launchpadSection').style.display = 'none';
+    } else alert("Secure anchors first.");
+}
+
+function sendSafetySignal(){
+    window.location.href = `sms:?&body=${encodeURIComponent("Architect Level 0: Offline for recovery. I am safe.")}`;
+}
+
+function generatePilotLog(){
+    let d=JSON.parse(localStorage.sessions||"[]");
+    let report = `ARCHITECT OS LOG\nSTREAK: ${localStorage.streak}\nLEVEL: ${getLevel()}\n\n`;
+    d.reverse().forEach(s => {
+        report += `${new Date(s.t).toLocaleDateString()} | ${s.type} | ${s.fox} | ${s.completed ? 'SUCCESS' : 'ABORT'}\n`;
+    });
+    const blob = new Blob([report], {type:'text/plain'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `PilotLog_${new Date().toISOString().slice(0,10)}.txt`;
+    a.click();
+}
+
+// --- STARFIELD ANIMATION ---
 const canvas=document.getElementById('bg');
 const ctx=canvas.getContext('2d');
 canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-let particles = Array.from({length:80},()=>({
-    x:Math.random()*canvas.width, 
-    y:Math.random()*canvas.height, 
-    v:Math.random()*0.4 + 0.1
+let particles = Array.from({length:60},()=>({
+    x:Math.random()*canvas.width, y:Math.random()*canvas.height, v:Math.random()*0.3 + 0.1
 }));
-
 function animate(){
-    ctx.fillStyle = '#020617';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = '#ffffff33';
+    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#ffffff22';
     particles.forEach(p=>{
-        p.y += p.v;
-        if(p.y > canvas.height) p.y = 0;
+        p.y += p.v; if(p.y > canvas.height) p.y = 0;
         ctx.fillRect(p.x, p.y, 1, 1);
     });
     requestAnimationFrame(animate);
 }
 animate();
-
 updateUI();
 </script>
+</body>
+</html>
