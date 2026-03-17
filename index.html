@@ -7,32 +7,45 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <link rel="manifest" href="manifest.json">
   <style>
-    body {
-      margin: 0;
-      font-family: -apple-system;
-      background: #0f1115;
-      color: #e8e6e3;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-    }
-    .btn {
-      display: block;
-      margin: 10px;
-      padding: 15px;
-      border-radius: 15px;
-      color: white;
-      border: none;
-      width: 200px;
-      font-size: 18px;
-    }
-    .y { background: #bfa76f; }
-    .r { background: #b85c5c; }
-    .o { background: #c98a4b; }
-    .p { background: #8b6fa8; }
-    .b { background: #5f7c99; }
+  body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont;
+  background: radial-gradient(circle at top, #1a1d24, #0f1115);
+  color: #e8e6e3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+
+#app {
+  max-width: 320px;
+  width: 100%;
+}
+
+h2 {
+  font-weight: 500;
+  margin-bottom: 20px;
+  opacity: 0.8;
+}
+
+.btn {
+  display: block;
+  margin: 12px auto;
+  padding: 16px;
+  border-radius: 20px;
+  color: white;
+  border: none;
+  width: 100%;
+  font-size: 17px;
+  transition: transform 0.15s ease, opacity 0.2s;
+}
+
+.btn:active {
+  transform: scale(0.96);
+  opacity: 0.8;
+}
   </style>
 </head>
 <body>
