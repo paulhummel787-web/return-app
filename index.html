@@ -1,210 +1,234 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Return</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
-      color: #e8e6e3;
-      transition: background 2s ease;
-    }
+<style>
+body{
+ margin:0;
+ font-family:-apple-system;
+ overflow:hidden;
+ color:#e8e6e3;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ height:100vh;
+ text-align:center;
+ background:#050505;
+}
 
-    .morning { background: radial-gradient(circle, #2a2f3a, #0e1015); }
-    .day { background: radial-gradient(circle, #1c1f26, #0b0d11); }
-    .night { background: radial-gradient(circle, #0a0c10, #000); }
+#bg{
+ position:fixed;
+ width:200%;
+ height:200%;
+ top:-50%;
+ left:-50%;
+ background: radial-gradient(circle at center, rgba(255,255,255,0.08), transparent 60%);
+ animation: move 20s infinite linear;
+}
 
-    #app { max-width: 340px; width: 100%; }
+@keyframes move{
+ 0%{transform:translate(0,0);}
+ 50%{transform:translate(20px,20px);}
+ 100%{transform:translate(0,0);}
+}
 
-    h2 { opacity: 0.5; letter-spacing: 3px; margin-bottom: 30px; }
+#app{max-width:360px;width:100%;position:relative;z-index:2;}
 
-    .choice {
-      margin: 10px 0;
-      padding: 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-    }
+.choice{
+ margin:8px 0;
+ padding:14px;
+ border-radius:999px;
+ background:rgba(255,255,255,0.05);
+}
 
-    .breath {
-      width: 170px;
-      height: 170px;
-      margin: 30px auto;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent);
-      animation: breathe 8s infinite ease-in-out;
-    }
+.active{background:rgba(255,255,255,0.2);}
 
-    @keyframes breathe {
-      0% { transform: scale(0.8); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(0.8); }
-    }
+.breath{
+ width:150px;height:150px;margin:20px auto;border-radius:50%;
+ background:radial-gradient(circle,rgba(255,255,255,0.15),transparent);
+ animation:breathe 8s infinite ease-in-out;
+}
 
-    #text { font-size: 18px; padding: 0 20px; line-height: 1.6; }
-    #info { font-size: 14px; opacity: 0.7; margin-top: 15px; }
+@keyframes breathe{
+ 0%{transform:scale(.8);}
+ 50%{transform:scale(1.25);}
+ 100%{transform:scale(.8);}
+}
 
-    .small {
-      margin-top: 20px;
-      padding: 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: none;
-      color: white;
-    }
-  </style>
+.small{
+ margin-top:10px;
+ padding:10px;
+ border:none;
+ border-radius:999px;
+ background:rgba(255,255,255,0.05);
+ color:white;
+}
+
+input{
+ width:85%;
+ padding:10px;
+ border-radius:10px;
+ border:none;
+ margin-top:10px;
+ background:rgba(255,255,255,0.05);
+ color:white;
+}
+</style>
 </head>
 
-<body id="body">
+<body>
+
+<div id="bg"></div>
 
 <div id="app">
 
 <!-- HOME -->
 <div id="home">
-  <h2>return</h2>
-
-  <div class="choice" onclick="startMode('return')">return (calm)</div>
-  <div class="choice" onclick="startMode('learn')">understand</div>
+<h2>return</h2>
+<div class="choice" onclick="nav('select')">begin</div>
+<div class="choice" onclick="nav('chat')">talk</div>
+<div class="choice" onclick="insight()">insight</div>
 </div>
 
-<!-- STATE SELECT -->
+<!-- SELECT -->
 <div id="select" style="display:none;">
-  <h2>what are you feeling</h2>
+<h2>what are you feeling</h2>
 
-  <div class="choice" onclick="start('heat')">overwhelmed</div>
-  <div class="choice" onclick="start('threat')">anxious</div>
-  <div class="choice" onclick="start('pressure')">pressure</div>
-  <div class="choice" onclick="start('gravity')">low</div>
-  <div class="choice" onclick="start('static')">scattered</div>
+<div class="choice" onclick="toggle('heat',this)">overwhelmed</div>
+<div class="choice" onclick="toggle('threat',this)">anxious</div>
+<div class="choice" onclick="toggle('pressure',this)">pressure</div>
+<div class="choice" onclick="toggle('gravity',this)">low</div>
+<div class="choice" onclick="toggle('static',this)">scattered</div>
+
+<button class="small" onclick="start()">enter</button>
 </div>
 
-<!-- RETURN MODE -->
-<div id="state" style="display:none;">
-  <div class="breath"></div>
-  <div id="text"></div>
-  <button class="small" onclick="next()">continue</button>
+<!-- FLOW -->
+<div id="flow" style="display:none;">
+<div class="breath"></div>
+<div id="text"></div>
 </div>
 
-<!-- LEARN MODE -->
-<div id="learn" style="display:none;">
-  <div id="text"></div>
-  <div id="info"></div>
-  <button class="small" onclick="home()">back</button>
+<!-- CHAT -->
+<div id="chat" style="display:none;">
+<h2>talk</h2>
+<div id="chatBox"></div>
+<input id="input" placeholder="say what's on your mind">
+<button class="small" onclick="send()">send</button>
+<button class="small" onclick="nav('home')">back</button>
+</div>
+
+<!-- INSIGHT -->
+<div id="insight" style="display:none;">
+<h2>pattern</h2>
+<div id="insightText"></div>
+<button class="small" onclick="nav('home')">back</button>
 </div>
 
 </div>
 
 <script>
 
-let mode="", state="", steps=[], i=0;
+let selected=[],steps=[],i=0,interval;
 
-// theme
-function setTheme(){
- let h=new Date().getHours();
- let b=document.getElementById("body");
- if(h<10) b.className="morning";
- else if(h<18) b.className="day";
- else b.className="night";
-}
-setTheme();
-
-// mode select
-function startMode(m){
- mode=m;
- document.getElementById("home").style.display="none";
- document.getElementById("select").style.display="block";
+// NAV
+function nav(id){
+ clearInterval(interval);
+ document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
+ document.getElementById(id).style.display="block";
 }
 
-// start
-function start(s){
- state=s;
- document.getElementById("select").style.display="none";
-
- if(mode==="return"){
-  document.getElementById("state").style.display="block";
-  buildReturn();
-  i=0;
-  show();
+// SELECT
+function toggle(s,el){
+ if(selected.includes(s)){
+  selected=selected.filter(x=>x!==s);
+  el.classList.remove("active");
  } else {
-  document.getElementById("learn").style.display="block";
-  buildLearn();
+  selected.push(s);
+  el.classList.add("active");
  }
 }
 
-// RETURN MODE
-function buildReturn(){
+// START FLOW
+function start(){
+ nav("flow");
+ build();
+ i=0;
+ runFlow();
 
- if(state==="heat"){
-  steps=["this is a lot","slow your breath","you are safe","God is your refuge"];
- }
- if(state==="threat"){
-  steps=["something feels wrong","look around","you are safe enough","God is with you"];
- }
- if(state==="pressure"){
-  steps=["too much at once","one step","you don’t need to carry all","God is not rushing you"];
- }
- if(state==="gravity"){
-  steps=["you feel heavy","that’s okay","rest","you are not alone"];
- }
- if(state==="static"){
-  steps=["too much noise","slow down","focus on one thing","return to calm"];
- }
+ let data=JSON.parse(localStorage.getItem("states")||"[]");
+ data.push(selected);
+ localStorage.setItem("states",JSON.stringify(data));
+}
 
+// FLOW
+function build(){
+ steps=[
+  "pause",
+  "slow your breathing",
+  "you are not in danger",
+  "stay here"
+ ];
+}
+
+function runFlow(){
+ show();
+ interval=setInterval(()=>{
+  i++;
+  if(i<steps.length) show();
+  else nav("home");
+ },4000);
 }
 
 function show(){
  document.getElementById("text").innerText=steps[i];
+ speak(steps[i]);
 }
 
-function next(){
- i++;
- if(i<steps.length) show();
- else home();
+// VOICE
+function speak(t){
+ let m=new SpeechSynthesisUtterance(t);
+ m.rate=0.8;
+ speechSynthesis.cancel();
+ speechSynthesis.speak(m);
 }
 
-// LEARN MODE
-function buildLearn(){
+// 🤖 CHAT (AI-LIKE)
+function send(){
+ let input=document.getElementById("input").value.toLowerCase();
+ let response="";
 
- let t="", info="";
+ if(input.includes("overwhelmed"))
+  response="it sounds like too much is happening at once. slow it down. one thing at a time.";
 
- if(state==="heat"){
-  t="overwhelm";
-  info="your nervous system is overloaded. too much input, not enough processing. reduce stimulation, breathe slowly, simplify.";
- }
+ else if(input.includes("anxious"))
+  response="your mind is trying to protect you. that doesn’t always mean you’re in danger.";
 
- if(state==="threat"){
-  t="anxiety";
-  info="your brain is scanning for danger. this does not always mean danger is real. orient to the present moment.";
- }
+ else
+  response="i’m here. slow down and tell me more.";
 
- if(state==="pressure"){
-  t="pressure";
-  info="too many demands at once. your mind cannot prioritize. break things into one small step.";
- }
+ let box=document.getElementById("chatBox");
+ box.innerHTML+="<div>"+input+"</div><div style='opacity:.6'>"+response+"</div>";
 
- if(state==="gravity"){
-  t="low state";
-  info="your system is conserving energy. this is not failure. rest and reduce expectations.";
- }
-
- if(state==="static"){
-  t="mental noise";
-  info="overstimulation. your brain needs less input, not more. slow everything down.";
- }
-
- document.getElementById("text").innerText=t;
- document.getElementById("info").innerText=info;
+ document.getElementById("input").value="";
 }
 
-// home
-function home(){
- location.reload();
+// INSIGHT
+function insight(){
+ nav("insight");
+ let data=JSON.parse(localStorage.getItem("states")||"[]");
+
+ let combos={};
+ data.forEach(arr=>{
+ let key=arr.sort().join("+");
+ combos[key]=(combos[key]||0)+1;
+ });
+
+ let top=Object.entries(combos).sort((a,b)=>b[1]-a[1])[0];
+
+ document.getElementById("insightText").innerText=
+ top ? "you often feel "+top[0].replaceAll("+"," + ") : "not enough data yet";
 }
 
 </script>
