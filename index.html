@@ -16,7 +16,7 @@ body{
  background:#050505;
 }
 
-/* 🌌 GLOW */
+/* 🌌 BACKGROUND */
 #glow{
  position:fixed;
  width:200%;
@@ -49,23 +49,8 @@ body{
  to{transform:translateY(-10vh);}
 }
 
-/* 👆 RIPPLE */
-.ripple{
- position:fixed;
- border-radius:50%;
- border:1px solid rgba(255,255,255,0.2);
- transform:translate(-50%,-50%);
- animation:ripple 1s ease-out forwards;
- pointer-events:none;
-}
-
-@keyframes ripple{
- from{width:0;height:0;opacity:.6;}
- to{width:200px;height:200px;opacity:0;}
-}
-
 /* UI */
-#app{position:relative;z-index:2;max-width:360px;width:100%;text-align:center;}
+#app{max-width:360px;width:100%;text-align:center;}
 
 .choice{
  margin:10px 0;
@@ -73,6 +58,8 @@ body{
  border-radius:999px;
  background:rgba(255,255,255,0.05);
 }
+
+.active{background:rgba(255,255,255,0.2);}
 
 .breath{
  width:150px;height:150px;margin:20px auto;border-radius:50%;
@@ -107,19 +94,20 @@ body{
 <div id="home">
 <h2>return</h2>
 <div class="choice" onclick="nav('select')">begin</div>
-<div class="choice" onclick="toggleSound()">sound</div>
+<div class="choice" onclick="nav('insight')">insight</div>
 </div>
 
 <!-- SELECT -->
 <div id="select" style="display:none;">
 <h2>what are you feeling</h2>
 
-<div class="choice" onclick="start(['heat'])">overwhelmed</div>
-<div class="choice" onclick="start(['threat'])">anxious</div>
-<div class="choice" onclick="start(['pressure'])">pressure</div>
-<div class="choice" onclick="start(['gravity'])">low</div>
-<div class="choice" onclick="start(['static'])">scattered</div>
+<div class="choice" onclick="toggle('heat',this)">overwhelmed</div>
+<div class="choice" onclick="toggle('threat',this)">anxious</div>
+<div class="choice" onclick="toggle('pressure',this)">pressure</div>
+<div class="choice" onclick="toggle('gravity',this)">low</div>
+<div class="choice" onclick="toggle('static',this)">scattered</div>
 
+<button class="small" onclick="start()">enter</button>
 <button class="small" onclick="nav('home')">back</button>
 </div>
 
@@ -127,6 +115,13 @@ body{
 <div id="flow" style="display:none;">
 <div class="breath"></div>
 <div id="text"></div>
+</div>
+
+<!-- INSIGHT -->
+<div id="insight" style="display:none;">
+<h2>insight</h2>
+<div id="insightText"></div>
+<button class="small" onclick="nav('home')">back</button>
 </div>
 
 </div>
@@ -142,93 +137,113 @@ for(let i=0;i<35;i++){
  document.body.appendChild(p);
 }
 
-// 👆 RIPPLE (only on background)
-document.body.addEventListener("click", function(e){
- if(e.target.classList.contains("choice") || e.target.classList.contains("small")) return;
-
- let r=document.createElement("div");
- r.className="ripple";
- r.style.left=e.clientX+"px";
- r.style.top=e.clientY+"px";
- document.body.appendChild(r);
- setTimeout(()=>r.remove(),1000);
-});
-
 // NAV
 function nav(id){
- clearInterval(interval);
+ clearInterval(flowInterval);
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
 }
 
-// 🌊 FLOW
-let steps=[],i=0,interval;
+// 🧠 STATE SYSTEM
+let selected=[];
 
-function start(state){
- nav("flow");
- build(state);
- i=0;
- run();
+function toggle(state,el){
+ if(selected.includes(state)){
+  selected=selected.filter(s=>s!==state);
+  el.classList.remove("active");
+ } else {
+  selected.push(state);
+  el.classList.add("active");
+ }
 }
 
-function build(state){
- steps=[];
+// 🧠 ENGINE (builds response)
+function buildFlow(){
 
- if(state.includes("heat")){
-  steps.push("this is a lot");
-  steps.push("your system is overwhelmed");
- }
+ let steps=[];
 
- if(state.includes("threat")){
+ // CLARITY FIRST
+ if(selected.includes("heat"))
+  steps.push("this is a lot right now");
+
+ if(selected.includes("threat"))
   steps.push("your mind is trying to protect you");
- }
 
+ if(selected.includes("pressure"))
+  steps.push("you are carrying a lot");
+
+ if(selected.includes("gravity"))
+  steps.push("your energy is low");
+
+ if(selected.includes("static"))
+  steps.push("your attention is scattered");
+
+ // REGULATION
  steps.push("slow your breathing");
  steps.push("you are safe");
  steps.push("stay here");
+
+ return steps;
 }
 
-function run(){
- show();
- interval=setInterval(()=>{
-  i++;
-  if(i<steps.length){
-   show();
+// 🌊 FLOW SYSTEM
+let flowSteps=[],flowIndex=0,flowInterval;
+
+function start(){
+ if(selected.length===0){
+  alert("select at least one state");
+  return;
+ }
+
+ flowSteps=buildFlow();
+ flowIndex=0;
+
+ nav("flow");
+ runFlow();
+}
+
+function runFlow(){
+ showStep();
+
+ flowInterval=setInterval(()=>{
+  flowIndex++;
+
+  if(flowIndex < flowSteps.length){
+   showStep();
   } else {
    nav("home");
+   selected=[];
   }
+
  },4000);
 }
 
-function show(){
- document.getElementById("text").innerText=steps[i];
+function showStep(){
+ let text=flowSteps[flowIndex];
+ document.getElementById("text").innerText=text;
+ speak(text);
 }
 
-// 🎧 SOUND (FIXED FOR iPHONE)
-let audioCtx=null;
+// 🎧 VOICE
+function speak(text){
+ let msg=new SpeechSynthesisUtterance(text);
+ msg.rate=0.85;
+ speechSynthesis.cancel();
+ speechSynthesis.speak(msg);
+}
 
-function toggleSound(){
- if(!audioCtx){
-  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+// 📊 INSIGHT SYSTEM (basic version)
+function generateInsight(){
 
-  let osc=audioCtx.createOscillator();
-  let gain=audioCtx.createGain();
-
-  osc.type="sine";
-  osc.frequency.value=110;
-
-  gain.gain.value=0.02;
-
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-
-  osc.start();
-
- } else {
-  audioCtx.close();
-  audioCtx=null;
+ if(selected.length===0){
+  return "start using the app to see patterns";
  }
+
+ return "you are experiencing: " + selected.join(", ");
 }
+
+// load insight
+document.getElementById("insightText").innerText = "use the app to build insight over time";
 
 </script>
 
