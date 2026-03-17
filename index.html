@@ -35,16 +35,9 @@ input, textarea{
  border:none;
 }
 
-.breath{
- width:120px;height:120px;margin:20px auto;border-radius:50%;
- background:rgba(255,255,255,0.1);
- animation:breathe 6s infinite;
-}
-
-@keyframes breathe{
- 0%{transform:scale(.8);}
- 50%{transform:scale(1.2);}
- 100%{transform:scale(.8);}
+#timer{
+ font-size:28px;
+ margin-top:10px;
 }
 
 .tabbar{
@@ -57,9 +50,6 @@ input, textarea{
  background:#111;
  padding:10px 0;
 }
-
-.tab{font-size:12px;opacity:0.6;}
-.tab.active{opacity:1;}
 </style>
 </head>
 
@@ -73,46 +63,30 @@ input, textarea{
 <div class="btn" onclick="nav('checkin')">check in</div>
 <div class="btn" onclick="nav('clarity')">clarity</div>
 <div class="btn" onclick="nav('dump')">brain dump</div>
-<div class="btn" onclick="nav('reset')">regulate</div>
-<div id="homeInsight" style="margin-top:20px;opacity:0.7;"></div>
-</div>
-
-<!-- RESET -->
-<div id="reset" style="display:none;">
-<h2>state</h2>
-<div class="btn" onclick="setState('yellow')">🟡</div>
-<div class="btn" onclick="setState('red')">🔴</div>
-<div class="btn" onclick="setState('orange')">🟠</div>
-<div class="btn" onclick="setState('purple')">🟣</div>
-<div class="btn" onclick="setState('blue')">🔵</div>
-<div class="breath"></div>
-<div id="resetText"></div>
-</div>
-
-<!-- CHECKIN -->
-<div id="checkin" style="display:none;">
-<h2>check in</h2>
-<input id="intent" placeholder="what matters today">
-<div class="btn" onclick="setCheck('yellow')">🟡</div>
-<div class="btn" onclick="setCheck('red')">🔴</div>
-<div class="btn" onclick="setCheck('orange')">🟠</div>
-<div class="btn" onclick="setCheck('purple')">🟣</div>
-<div class="btn" onclick="setCheck('blue')">🔵</div>
-<div class="btn" onclick="runCheck()">begin</div>
-<div id="checkOutput"></div>
+<div id="homeInsight"></div>
 </div>
 
 <!-- CLARITY -->
 <div id="clarity" style="display:none;">
 <h2>clarity</h2>
 <input id="fox" placeholder="your focus">
-<div class="btn" onclick="pickState('yellow',this)">🟡</div>
-<div class="btn" onclick="pickState('red',this)">🔴</div>
-<div class="btn" onclick="pickState('orange',this)">🟠</div>
-<div class="btn" onclick="pickState('purple',this)">🟣</div>
-<div class="btn" onclick="pickState('blue',this)">🔵</div>
-<div class="btn" onclick="runDay()">run</div>
+
+<div class="btn" onclick="pickState('yellow')">🟡</div>
+<div class="btn" onclick="pickState('red')">🔴</div>
+<div class="btn" onclick="pickState('orange')">🟠</div>
+<div class="btn" onclick="pickState('purple')">🟣</div>
+<div class="btn" onclick="pickState('blue')">🔵</div>
+
+<div class="btn" onclick="runDay()">start</div>
+
 <div id="clarityText"></div>
+
+<div id="stepMode" style="display:none;">
+<h3 id="stepText"></h3>
+<div id="timer"></div>
+<div class="btn" onclick="nextStep()">next</div>
+</div>
+
 <div class="btn" onclick="completeTask()">i did it</div>
 </div>
 
@@ -127,46 +101,43 @@ input, textarea{
 </div>
 
 <div class="tabbar">
-<div class="tab active" onclick="nav('home',this)">home</div>
-<div class="tab" onclick="nav('reset',this)">reset</div>
-<div class="tab" onclick="nav('clarity',this)">clarity</div>
-<div class="tab" onclick="nav('dump',this)">dump</div>
+<div class="tab" onclick="nav('home')">home</div>
+<div class="tab" onclick="nav('clarity')">clarity</div>
+<div class="tab" onclick="nav('dump')">dump</div>
 </div>
 
 <script>
 
 // NAV
-function nav(id,el){
+function nav(id){
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
- document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
- if(el) el.classList.add("active");
  if(id==="home") updateHome();
 }
 
 // STATE
-function setState(s){
+let currentState=null;
+function pickState(s){
+ currentState=s;
  document.body.className=s;
- resetText.innerText=getAdaptiveScripture(s);
- save(s);
 }
 
 // SCRIPTURE
 const scriptures={
- red:["be still and know","the lord is near","do not fear"],
- orange:["you are safe","peace be with you"],
- purple:["trust in the lord","renew your mind"],
- blue:["come to me and rest","strength will return"],
- yellow:["be still","quiet your mind"]
+ red:["be still","god is with you"],
+ purple:["trust","renew your mind"],
+ blue:["rest","strength returns"],
+ yellow:["quiet","be still"],
+ orange:["you are safe"]
 };
 
-function getAdaptiveScripture(s){
- let list=scriptures[s]||["stay steady"];
+function getScripture(s){
+ let list=scriptures[s]||["steady"];
  return list[Math.floor(Math.random()*list.length)];
 }
 
 // COACH
-function getCoachMessage(s){
+function getCoach(s){
  let map={
   red:"stop pushing",
   purple:"stop thinking",
@@ -174,52 +145,97 @@ function getCoachMessage(s){
   yellow:"reduce input",
   orange:"you are safe"
  };
- return map[s]||"stay steady";
+ return map[s]||"steady";
 }
 
-// CHECKIN
-let checkState=null;
-function setCheck(s){checkState=s;}
-function runCheck(){
- let intent=document.getElementById("intent").value;
- checkOutput.innerText=getCoachMessage(checkState)+"\n\n"+intent;
- save(checkState);
- logUsage();
-}
-
-// CLARITY
-let currentState=null;
-function pickState(s){currentState=s;}
+// 🪜 STEP MODE
+let steps=[];
+let stepIndex=0;
 
 function runDay(){
+
  let fox=document.getElementById("fox").value||"task";
- clarityText.innerText=getCoachMessage(currentState)+"\n\n"+fox;
+
+ let coach=getCoach(currentState);
+ let scripture=getScripture(currentState);
+
+ // build steps
+ if(currentState==="red"){
+  steps=["stop","breathe","wait","open "+fox,"2 min work"];
+ } else if(currentState==="purple"){
+  steps=["write it down","pick one","open "+fox,"2 min"];
+ } else{
+  steps=["open "+fox,"2 min"];
+ }
+
+ clarityText.innerText=coach+"\n\n"+scripture;
+
+ // start step mode
+ stepIndex=0;
+ document.getElementById("stepMode").style.display="block";
+ showStep();
+
  saveTask(fox);
- save(currentState);
  logUsage();
+}
+
+// SHOW STEP
+function showStep(){
+ document.getElementById("stepText").innerText=steps[stepIndex];
+
+ if(steps[stepIndex].includes("2 min")){
+  startTimer(120);
+ } else {
+  document.getElementById("timer").innerText="";
+ }
+}
+
+// NEXT STEP
+function nextStep(){
+ stepIndex++;
+ if(stepIndex<steps.length){
+  showStep();
+ } else{
+  document.getElementById("stepText").innerText="done";
+ }
+}
+
+// ⏱️ TIMER
+let timerInterval;
+
+function startTimer(seconds){
+
+ clearInterval(timerInterval);
+
+ let t=seconds;
+
+ timerInterval=setInterval(()=>{
+  let m=Math.floor(t/60);
+  let s=t%60;
+
+  document.getElementById("timer").innerText=
+   m+":"+(s<10?"0":"")+s;
+
+  t--;
+
+  if(t<0){
+   clearInterval(timerInterval);
+   document.getElementById("timer").innerText="complete";
+  }
+
+ },1000);
 }
 
 // DUMP
 function processDump(){
 
- let text=document.getElementById("dumpInput").value.toLowerCase();
+ let text=document.getElementById("dumpInput").value;
 
- let lines=text.split(/[\n,.]/).map(l=>l.trim()).filter(l=>l);
+ let lines=text.split(/[\n,.]/).filter(l=>l);
 
- let tasks=[],worries=[];
+ let top=lines[0]||"start small";
 
- lines.forEach(l=>{
-  if(l.includes("feel")) worries.push(l);
-  else tasks.push(l);
- });
-
- tasks.sort((a,b)=>a.length-b.length);
-
- let top=tasks[0]||"start small";
-
- dumpOutput.innerText=
- "focus:\n"+top+
- "\n\nstep:\nopen → 2 min";
+ dumpOutput.innerText="focus:\n"+top;
 
  saveTask(top);
  logUsage();
@@ -238,13 +254,6 @@ function completeTask(){
  localStorage.setItem("tasks",JSON.stringify(t));
 }
 
-// DATA
-function save(s){
- let d=JSON.parse(localStorage.getItem("data")||"[]");
- d.push({state:s});
- localStorage.setItem("data",JSON.stringify(d));
-}
-
 // STREAK
 function logUsage(){
  let today=new Date().toDateString();
@@ -258,26 +267,9 @@ function getStreak(){
  return u.length;
 }
 
-function getMomentum(){
- let s=getStreak();
- if(s<3) return "build";
- if(s<7) return "consistent";
- return "identity";
-}
-
 // HOME
 function updateHome(){
-
- let d=JSON.parse(localStorage.getItem("data")||"[]");
-
- let last=d.length?d[d.length-1].state:null;
-
- let coach=last?getCoachMessage(last):"start";
-
- homeInsight.innerText=
- coach+
- "\n\n🔥 streak: "+getStreak()+
- "\n"+getMomentum();
+ homeInsight.innerText="🔥 streak: "+getStreak();
 }
 
 </script>
