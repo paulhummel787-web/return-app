@@ -1,263 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Architect OS</title>
+    <style>
+        :root {
+            --bg: #020617; --card: #1e293b; --accent: #38bdf8;
+            --yellow: #fde047; --red: #f87171; --orange: #fb923c; --purple: #c084fc; --blue: #60a5fa;
+            --green: #22c55e; --fox: #fb923c;
+        }
 
-<style>
-body{
- margin:0;
- font-family:-apple-system;
- color:white;
- background:#020617;
- text-align:center;
-}
+        body { 
+            margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            color: white; background: var(--bg); transition: background 0.5s ease;
+            -webkit-tap-highlight-color: transparent; overflow-x: hidden;
+        }
 
-.container{padding:20px;max-width:420px;margin:auto;}
+        .container { padding: 20px; max-width: 420px; margin: auto; padding-bottom: 120px; }
 
-.tab{display:none;}
+        /* SURVIVAL OVERRIDE */
+        body.survival-mode { background: #000 !important; }
+        body.survival-mode #nav, body.survival-mode .pilot-only { display: none !important; }
 
-.active{display:block;}
+        /* Typography & Layout */
+        h1, h2 { font-weight: 800; letter-spacing: -0.5px; text-align: center; }
+        .card { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .tab { display: none; }
+        .active { display: block; animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-.btn{
- padding:16px;
- margin:10px 0;
- border-radius:12px;
- background:#1e293b;
-}
+        /* Dashboard Elements */
+        .state-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .state-btn { padding: 22px 10px; border-radius: 16px; border: none; font-weight: 900; cursor: pointer; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: #000; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
 
-textarea{
- width:100%;
- height:80px;
- border-radius:10px;
- margin-top:10px;
-}
+        .btn { padding: 18px; border-radius: 14px; background: #334155; border: none; color: white; width: 100%; margin: 10px 0; font-weight: bold; cursor: pointer; display: block; text-align: center; text-decoration: none; font-size: 1rem; }
+        .btn-fox { border: 2px solid var(--fox); color: var(--fox); background: rgba(251, 146, 60, 0.05); }
+        .btn-mvs { border: 2px dashed var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.05); }
 
-#nav{
- position:fixed;
- bottom:0;
- width:100%;
- display:flex;
- justify-content:space-around;
- background:#020617;
- padding:10px 0;
- border-top:1px solid #333;
-}
+        /* Truth Anchors */
+        .anchor-box { border-left: 4px solid var(--accent); padding: 15px; background: rgba(255,255,255,0.03); margin: 20px 0; border-radius: 0 16px 16px 0; }
+        .scripture { font-size: 0.8rem; color: var(--accent); font-weight: 800; margin-bottom: 8px; text-transform: uppercase; }
+        .truth-text { font-size: 1.1rem; font-style: italic; line-height: 1.5; opacity: 0.95; }
+        .affirmation { margin-top: 12px; font-weight: 800; font-size: 1.1rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px; }
 
-#nav div{
- font-size:12px;
-}
+        /* Input Styles */
+        input, textarea { width: 100%; background: #0f172a; border: 1px solid #334155; color: white; border-radius: 12px; padding: 15px; box-sizing: border-box; font-size: 1rem; margin-bottom: 10px; }
 
-.breath{
- width:120px;height:120px;margin:20px auto;
- border-radius:50%;
- background:rgba(255,255,255,0.1);
- animation:breathe 6s infinite;
-}
+        /* Nav */
+        #nav { position: fixed; bottom: 0; width: 100%; display: flex; justify-content: space-around; background: rgba(2,6,23,0.9); backdrop-filter: blur(20px); padding: 20px 0; border-top: 1px solid #334155; z-index: 100; }
+        .nav-item { opacity: 0.4; font-size: 0.65rem; font-weight: 900; cursor: pointer; text-transform: uppercase; letter-spacing: 1.5px; }
+        .nav-item.active { opacity: 1; color: var(--accent); }
 
-@keyframes breathe{
- 0%{transform:scale(.8);}
- 50%{transform:scale(1.2);}
- 100%{transform:scale(.8);}
-}
-</style>
+        .status-badge { font-size: 0.7rem; font-weight: 900; padding: 4px 8px; border-radius: 6px; background: var(--accent); color: black; float: right; }
+    </style>
 </head>
-
 <body>
 
 <div class="container">
+    
+    <div id="reset" class="tab active">
+        <h2 id="headerTitle">PILOT STATUS</h2>
+        
+        <div id="survivalCard" style="display:none;">
+            <div class="card" id="stateHeader">
+                <h1 id="survivalColorName" style="margin:0; font-size: 3rem;"></h1>
+                <p id="survivalAction" style="font-size: 1.1rem; margin: 15px 0; font-weight: 600;"></p>
+            </div>
 
-<!-- RESET TAB -->
-<div id="reset" class="tab active">
-<h2>Reset</h2>
-<div id="resetText">Press below if you feel off</div>
-<div class="breath"></div>
-<div class="btn" onclick="startReset()">I feel off</div>
-<div id="nextBtn" class="btn" style="display:none;" onclick="nextStep()">Next</div>
+            <div class="anchor-box">
+                <div id="scriptureRef" class="scripture"></div>
+                <div id="truthText" class="truth-text"></div>
+                <div id="affirmationText" class="affirmation"></div>
+            </div>
+
+            <button class="btn" onclick="exitSurvival()" style="background:var(--accent); color:black; font-size:1.2rem; margin-top:20px;">I AM STABILIZED</button>
+        </div>
+
+        <div id="normalStatus">
+            <div class="card">
+                <span id="recoveryBadge" class="status-badge" style="display:none;">RECOVERY ACTIVE</span>
+                <p style="margin:0; font-size:0.9rem; font-weight: 500;">Current Load: <span id="capacity">70% Governor Active</span></p>
+            </div>
+
+            <div class="state-grid">
+                <button class="state-btn" style="background:var(--yellow);" onclick="enterSurvival('YELLOW')">🟡 STATIC<br>ADHD</button>
+                <button class="state-btn" style="background:var(--red);" onclick="enterSurvival('RED')">🔴 HEAT<br>BPD</button>
+                <button class="state-btn" style="background:var(--orange);" onclick="enterSurvival('ORANGE')">🟠 THREAT<br>CPTSD</button>
+                <button class="state-btn" style="background:var(--purple);" onclick="enterSurvival('PURPLE')">🟣 PRESSURE<br>GAD</button>
+                <button class="state-btn" style="background:var(--blue); color:white" onclick="enterSurvival('BLUE')">🔵 GRAVITY<br>MDD</button>
+                <button class="state-btn" style="background:var(--green);" onclick="enterSurvival('GREEN')">🟢 CLEAR<br>PILOT</button>
+            </div>
+            
+            <p style="text-align:center; font-size: 0.7rem; opacity: 0.5; margin-top: 20px;">10 MINS SPIRAL = COLD WATER | 20 MINS STUCK = RESET</p>
+        </div>
+    </div>
+
+    <div id="architect" class="tab pilot-only">
+        <h2>THE ARCHITECT</h2>
+        
+        <div class="card">
+            <label style="color:var(--fox); font-weight:900; font-size:0.7rem;">🦊 THE GREAT FOX (ONE WIN)</label>
+            <h3 id="foxDisplay" style="margin:10px 0;">[No Fox Locked]</h3>
+            <input type="text" id="foxInput" placeholder="Define the weekly win...">
+            <button class="btn btn-fox" onclick="saveFox()">LOCK FOX</button>
+        </div>
+
+        <div class="card">
+            <label style="font-weight:900; font-size:0.7rem;">👻 GHOST DECODER (MVS)</label>
+            <input type="text" id="complexTask" placeholder="Enter task name...">
+            <button class="btn btn-mvs" onclick="unzipTask()">UNZIP MOVEMENTS</button>
+            <div id="unzipResult" style="display:none; margin-top:15px; border-top: 1px solid #444; padding-top:10px;">
+                <ol id="movementList" style="padding-left:20px; line-height:1.8;"></ol>
+            </div>
+        </div>
+    </div>
+
+    <div id="memory" class="tab pilot-only">
+        <h2>MEMORY SHIELD</h2>
+        <div class="card">
+            <textarea id="memoInput" rows="5" placeholder="Log symptom or truth before memory blackout..."></textarea>
+            <button class="btn" style="background:var(--accent); color:black" onclick="saveMemo()">SHIELD MEMORY</button>
+        </div>
+        <div id="memoList"></div>
+    </div>
+
 </div>
 
-<!-- CLARITY -->
-<div id="clarity" class="tab">
-<h2>Clarity</h2>
-<textarea id="dump" placeholder="Write everything..."></textarea>
-<div class="btn" onclick="processDump()">Process</div>
-<div id="result"></div>
-</div>
-
-<!-- DASHBOARD -->
-<div id="dash" class="tab">
-<h2>Dashboard</h2>
-<div id="stats"></div>
-<canvas id="chart"></canvas>
-</div>
-
-<!-- YOU -->
-<div id="you" class="tab">
-<h2>You</h2>
-<div id="identity"></div>
-<div class="btn" onclick="dailyCheck()">Daily Check-In</div>
-</div>
-
-<!-- GUIDE -->
-<div id="guide" class="tab">
-<h2>Guide</h2>
-<div id="scripture"></div>
-</div>
-
-</div>
-
-<!-- NAV -->
 <div id="nav">
-<div onclick="showTab('reset')">Reset</div>
-<div onclick="showTab('clarity')">Clarity</div>
-<div onclick="showTab('dash')">Dashboard</div>
-<div onclick="showTab('you')">You</div>
-<div onclick="showTab('guide')">Guide</div>
+    <div class="nav-item active" onclick="showTab('reset', this)">RESET</div>
+    <div class="nav-item" onclick="showTab('architect', this)">ENGINE</div>
+    <div class="nav-item" onclick="showTab('memory', this)">MEMORY</div>
 </div>
 
 <script>
+    const dataMap = {
+        'YELLOW': { 
+            act: 'REDUCE: Noise-canceling on. Close all tabs. Pick 1 task.',
+            ref: 'Psalm 142:3', truth: 'When my spirit was overwhelmed within me, You knew my path.', affirm: 'Even when I don\'t know the way, God has the map.',
+            speech: 'Yellow state. High static. Reduce input now.'
+        },
+        'RED': { 
+            act: 'REGULATE: COLD SHOCK. Splash face with ice water.',
+            ref: 'Romans 8:38', truth: 'Nothing can separate me from the love of God.', affirm: 'I am inseparable from Love. It cannot be taken.',
+            speech: 'Red state. High heat. Use the ice now.'
+        },
+        'ORANGE': { 
+            act: 'SAFEGUARD: 5-4-3-2-1 Grounding. Weighted blanket.',
+            ref: 'Deuteronomy 31:8', truth: 'He will never leave you nor forsake you.', affirm: 'I am never alone. God is already in my tomorrow.',
+            speech: 'Orange state. Threat detected. Ground yourself.'
+        },
+        'PURPLE': { 
+            act: 'SIMPLIFY: Next 5 minutes only. Offload thoughts to paper.',
+            ref: '2 Timothy 1:7', truth: 'God has not given me a spirit of fear, but of power and a sound mind.', affirm: 'I reject fear. I have a sound and clear mind.',
+            speech: 'Purple state. High pressure. Simplify the next five minutes.'
+        },
+        'BLUE': { 
+            act: 'COMPASSION: Power-save mode. Rest is the task. No guilt.',
+            ref: 'Psalm 55:22', truth: 'Cast your cares on the Lord and He will sustain you.', affirm: 'I am sustained. I give God my weight.',
+            speech: 'Blue state. High gravity. Power down with compassion.'
+        },
+        'GREEN': { 
+            act: 'PILOT ONLINE: 70% Governor active. Proceed with the Fox.',
+            ref: 'Philippians 4:13', truth: 'I can do all things through Christ who strengthens me.', affirm: 'I have enough strength for this one next step.',
+            speech: 'Green state. Pilot is online. Take the next step.'
+        }
+    };
 
-// ---------- VOICE ----------
-function speak(t){
- let msg=new SpeechSynthesisUtterance(t);
- msg.rate=0.9;
- speechSynthesis.cancel();
- speechSynthesis.speak(msg);
-}
+    function speak(t) {
+        window.speechSynthesis.cancel();
+        let m = new SpeechSynthesisUtterance(t);
+        m.rate = 0.85; window.speechSynthesis.speak(m);
+    }
 
-// ---------- NAV ----------
-let locked=false;
+    function enterSurvival(color) {
+        document.body.classList.add('survival-mode');
+        document.getElementById('normalStatus').style.display = 'none';
+        document.getElementById('survivalCard').style.display = 'block';
+        document.getElementById('headerTitle').innerText = "TRUTH ANCHOR";
+        
+        const d = dataMap[color];
+        document.getElementById('survivalColorName').innerText = color;
+        document.getElementById('survivalColorName').style.color = `var(--${color.toLowerCase()})`;
+        document.getElementById('survivalAction').innerText = d.act;
+        document.getElementById('scriptureRef').innerText = d.ref;
+        document.getElementById('truthText').innerText = d.truth;
+        document.getElementById('affirmationText').innerText = d.affirm;
+        speak(d.speech);
+    }
 
-function showTab(tab){
- if(locked){
-  speak("Stay here. Finish this first.");
-  return;
- }
- document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
- document.getElementById(tab).classList.add("active");
-}
+    function exitSurvival() {
+        document.body.classList.remove('survival-mode');
+        document.getElementById('normalStatus').style.display = 'block';
+        document.getElementById('survivalCard').style.display = 'none';
+        document.getElementById('headerTitle').innerText = "PILOT STATUS";
+        localStorage.setItem('lastSpike', Date.now());
+        checkRecovery();
+    }
 
-// ---------- RESET SYSTEM ----------
-let steps=[],i=0;
+    function checkRecovery() {
+        const last = localStorage.getItem('lastSpike');
+        if (last && (Date.now() - last < 259200000)) { // 72 Hours
+            document.getElementById('recoveryBadge').style.display = 'block';
+        }
+    }
 
-function startReset(){
+    function saveFox() {
+        const val = document.getElementById('foxInput').value;
+        if(val) {
+            localStorage.setItem('weeklyFox', val);
+            document.getElementById('foxDisplay').innerText = val;
+            document.getElementById('foxInput').value = '';
+        }
+    }
 
- locked=true;
+    function unzipTask() {
+        const t = document.getElementById('complexTask').value;
+        const list = document.getElementById('movementList');
+        document.getElementById('unzipResult').style.display = 'block';
+        list.innerHTML = `<li>Go to where ${t} happens.</li><li>Touch one object related to ${t}.</li><li>Do exactly 2 minutes of it. Stop.</li>`;
+    }
 
- steps=[
-  "Stop. Stay here.",
-  "Breathe slowly",
-  "You are safe",
-  "Do not react",
-  "Let it pass"
- ];
+    function saveMemo() {
+        const m = document.getElementById('memoInput').value;
+        if(m) {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerText = m;
+            document.getElementById('memoList').prepend(div);
+            document.getElementById('memoInput').value = '';
+        }
+    }
 
- i=0;
- runStep();
- document.getElementById("nextBtn").style.display="block";
-}
+    function showTab(id, el) {
+        if(document.body.classList.contains('survival-mode')) return;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        el.classList.add('active');
+    }
 
-function runStep(){
- let s=steps[i];
- document.getElementById("resetText").innerText=s;
- speak(s);
-}
-
-function nextStep(){
- i++;
- if(i<steps.length){
-  runStep();
- } else{
-  locked=false;
-  document.getElementById("resetText").innerText="You’re okay.";
-  speak("Good job");
- }
-}
-
-// ---------- BRAIN DUMP ----------
-function processDump(){
- let t=document.getElementById("dump").value;
- let r="Focus on one thing.";
-
- if(t.includes("angry")){
-  r="You are emotional. Do not react yet.";
- }
-
- document.getElementById("result").innerText=r;
- speak(r);
-}
-
-// ---------- IDENTITY ----------
-function getID(){
- return JSON.parse(localStorage.id||"{}");
-}
-
-function setID(d){
- localStorage.id=JSON.stringify(d);
-}
-
-function init(){
- let id=getID();
- if(!id.name){
-  id.name=prompt("Your name?");
-  id.values=prompt("Your values?");
-  id.streak=0;
-  setID(id);
- }
- updateYou();
-}
-
-function updateYou(){
- let id=getID();
- document.getElementById("identity").innerText=
- id.name+" | "+id.values+" | Streak: "+id.streak;
-}
-
-// ---------- CHECKIN ----------
-function dailyCheck(){
- let id=getID();
- id.streak++;
- setID(id);
- updateYou();
- speak("Check in done");
-}
-
-// ---------- DASHBOARD ----------
-function updateDash(){
- let log=JSON.parse(localStorage.log||"[]");
- document.getElementById("stats").innerText="Entries: "+log.length;
- drawChart();
-}
-
-// ---------- CHART ----------
-function drawChart(){
- let c=document.getElementById("chart");
- let ctx=c.getContext("2d");
- ctx.clearRect(0,0,c.width,c.height);
-
- let log=JSON.parse(localStorage.log||"[]").slice(-7);
-
- log.forEach((e,i)=>{
-  ctx.fillRect(i*40,150-Math.random()*100,20,100);
- });
-}
-
-// ---------- SCRIPTURE ----------
-function setScripture(){
- let arr=[
-  "Be still and know.",
-  "You are not alone.",
-  "This will pass."
- ];
- document.getElementById("scripture").innerText=
- arr[Math.floor(Math.random()*arr.length)];
-}
-
-// ---------- INIT ----------
-init();
-updateDash();
-setScripture();
-
+    window.onload = () => {
+        const f = localStorage.getItem('weeklyFox');
+        if(f) document.getElementById('foxDisplay').innerText = f;
+        checkRecovery();
+    };
 </script>
-
 </body>
 </html>
