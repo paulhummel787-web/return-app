@@ -948,7 +948,14 @@
             const original = btn.innerHTML;
             btn.innerHTML = '<span>Copied to Clipboard</span>';
             setTimeout(() => btn.innerHTML = original, 2000);
-        }
+        }// Register the Service Worker for Offline Use
+if ('service worker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Offline System: Active'))
+            .catch(err => console.log('Offline System: Failed', err));
+    });
+}
     </script>
 </body>
 </html>
