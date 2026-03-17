@@ -13,22 +13,11 @@ body{
  transition:background 0.8s ease;
 }
 
-/* STATE COLORS */
 body.yellow{background:#3a3a1a;}
 body.red{background:#3a1a1a;}
 body.orange{background:#3a261a;}
 body.purple{background:#2a1a3a;}
 body.blue{background:#1a253a;}
-
-/* AMBIENT GLOW */
-body::before{
- content:"";
- position:fixed;
- width:100%;height:100%;
- background:radial-gradient(circle, rgba(255,255,255,0.08), transparent 70%);
- pointer-events:none;
- transition:opacity 1s ease;
-}
 
 #app{max-width:420px;margin:auto;padding:20px;}
 
@@ -37,15 +26,7 @@ body::before{
  padding:14px;
  border-radius:999px;
  background:rgba(255,255,255,0.05);
- transition:all 0.3s ease;
 }
-
-.btn:active{
- transform:scale(0.95);
- background:rgba(255,255,255,0.2);
-}
-
-.active{background:rgba(255,255,255,0.2);}
 
 input{
  width:90%;
@@ -58,7 +39,7 @@ input{
 .breath{
  width:120px;height:120px;margin:20px auto;border-radius:50%;
  background:radial-gradient(circle,rgba(255,255,255,0.2),transparent);
- animation:breathe 6s infinite ease-in-out;
+ animation:breathe 6s infinite;
 }
 
 @keyframes breathe{
@@ -80,6 +61,18 @@ input{
 
 .tab{font-size:12px;opacity:0.6;}
 .tab.active{opacity:1;}
+
+#lock{
+ position:fixed;
+ top:0;left:0;
+ width:100%;height:100%;
+ background:#000;
+ color:white;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ font-size:20px;
+}
 </style>
 </head>
 
@@ -87,105 +80,65 @@ input{
 
 <div id="app">
 
-<!-- HOME -->
 <div id="home">
 <h2>return</h2>
 <div class="btn" onclick="nav('reset')">reset</div>
 <div class="btn" onclick="nav('clarity')">run my day</div>
 <div class="btn" onclick="nav('emergency')">emergency</div>
-
-<p style="opacity:0.5;margin-top:20px;">
-fix the state, then run the system
-</p>
+<div class="btn" onclick="lockMode()">lockscreen</div>
 </div>
 
-<!-- RESET -->
 <div id="reset" style="display:none;">
 <h2>state</h2>
-
-<div class="btn" onclick="setState('yellow')">🟡 static</div>
-<div class="btn" onclick="setState('red')">🔴 heat</div>
-<div class="btn" onclick="setState('orange')">🟠 threat</div>
-<div class="btn" onclick="setState('purple')">🟣 pressure</div>
-<div class="btn" onclick="setState('blue')">🔵 gravity</div>
-
+<div class="btn" onclick="setState('yellow')">🟡</div>
+<div class="btn" onclick="setState('red')">🔴</div>
+<div class="btn" onclick="setState('orange')">🟠</div>
+<div class="btn" onclick="setState('purple')">🟣</div>
+<div class="btn" onclick="setState('blue')">🔵</div>
 <div class="breath"></div>
 <div id="resetText"></div>
 </div>
 
-<!-- EMERGENCY -->
 <div id="emergency" style="display:none;">
 <h2>emergency</h2>
-
 <div class="btn" onclick="emergency('red')">🔴</div>
 <div class="btn" onclick="emergency('orange')">🟠</div>
 <div class="btn" onclick="emergency('purple')">🟣</div>
 <div class="btn" onclick="emergency('blue')">🔵</div>
 <div class="btn" onclick="emergency('yellow')">🟡</div>
-
 <div id="emergencyText"></div>
 </div>
 
-<!-- CLARITY -->
 <div id="clarity" style="display:none;">
-<h2>clarity engine</h2>
-
-<h3>weekly</h3>
-<input id="fox" placeholder="great fox">
-<input id="elim" placeholder="eliminate">
-<input id="anchor" placeholder="anchor">
-
-<h3>today</h3>
+<h2>clarity</h2>
+<input id="fox" placeholder="your fox">
 <div class="btn" onclick="pickState('yellow',this)">🟡</div>
 <div class="btn" onclick="pickState('red',this)">🔴</div>
 <div class="btn" onclick="pickState('orange',this)">🟠</div>
 <div class="btn" onclick="pickState('purple',this)">🟣</div>
 <div class="btn" onclick="pickState('blue',this)">🔵</div>
-
 <div class="btn" onclick="runDay()">run</div>
-
 <div id="clarityText"></div>
 </div>
 
-<!-- INSIGHT -->
 <div id="insight" style="display:none;">
 <h2>insight</h2>
 <div id="insightText"></div>
 </div>
 
-<!-- LEARN -->
-<div id="learn" style="display:none;">
-<h2>system</h2>
-
-<p><b>pilot / alarm / battery</b><br>
-you are a system, not a failure</p>
-
-<p><b>fox vs rabbits</b><br>
-fox = progress<br>
-rabbits = distraction</p>
-
-<p><b>bodyguards</b><br>
-perfectionist / people pleaser / burnout</p>
-
-<p><b>rule</b><br>
-fix the state, then act</p>
-
 </div>
 
-</div>
+<div id="lock" onclick="exitLock()">tap to exit</div>
 
-<!-- TAB BAR -->
 <div class="tabbar">
 <div class="tab active" onclick="nav('home',this)">home</div>
 <div class="tab" onclick="nav('reset',this)">reset</div>
 <div class="tab" onclick="nav('clarity',this)">clarity</div>
 <div class="tab" onclick="nav('insight',this)">insight</div>
-<div class="tab" onclick="nav('learn',this)">learn</div>
 </div>
 
 <script>
 
-// NAV
 function nav(id,el){
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
@@ -198,26 +151,24 @@ function nav(id,el){
 
 // STATE
 function setState(s){
+ document.body.className=s;
 
- document.body.className = s;
-
- let text = {
-  red:"cool your system. cold water. breathe.",
-  orange:"you are safe. ground.",
-  purple:"empty the loop. write it down.",
-  blue:"rest. no guilt.",
-  yellow:"reduce input."
+ let text={
+  red:"cold water + breathe",
+  orange:"you are safe",
+  purple:"write it down",
+  blue:"rest",
+  yellow:"reduce input"
  };
 
- document.getElementById("resetText").innerText=text[s];
-
+ resetText.innerText=text[s];
  save(s);
 }
 
 // EMERGENCY
 function emergency(s){
  setState(s);
- document.getElementById("emergencyText").innerText="do 1 tiny step";
+ emergencyText.innerText="1 step only";
 }
 
 // CLARITY
@@ -229,89 +180,83 @@ function pickState(s,el){
  el.classList.add("active");
 }
 
+// 🪜 AUTO MVS
+function generateSteps(task){
+
+ let steps=[
+  "open it",
+  "write 1 line",
+  "work for 2 minutes",
+  "continue if able"
+ ];
+
+ return steps.map(s=>task+" → "+s).join("\n");
+}
+
+// 🧠 PREDICT
+function predictState(data){
+
+ let last=data.slice(-3).map(d=>d.state);
+
+ if(last.includes("purple") && last.includes("red")){
+  return "⚠️ trending toward overwhelm";
+ }
+
+ if(last.includes("yellow") && last.includes("purple")){
+  return "⚠️ overload building";
+ }
+
+ return "";
+}
+
 function runDay(){
 
- let fox = document.getElementById("fox").value || "your priority";
+ let fox=document.getElementById("fox").value || "task";
 
- let msg = "";
+ let msg="";
 
  if(currentState==="red"){
-  msg="regulate first → then 2 min step";
- }
- else if(currentState==="orange"){
-  msg="ground → then return to "+fox;
- }
- else if(currentState==="blue"){
-  msg="rest → minimum effort only";
- }
- else if(currentState==="purple"){
-  msg="write it down → open "+fox;
- }
- else if(currentState==="yellow"){
-  msg="reduce input → focus on "+fox;
+  msg="regulate first\n\nthen:\n"+generateSteps(fox);
  }
  else{
-  msg="start small → 2 minutes on "+fox;
+  msg=generateSteps(fox);
  }
 
- document.getElementById("clarityText").innerText = msg;
+ clarityText.innerText=msg;
 
- save(currentState || "unknown");
+ save(currentState||"unknown");
 }
 
 // SAVE
 function save(s){
-
  let d=JSON.parse(localStorage.getItem("data")||"[]");
  d.push({state:s,time:Date.now()});
  localStorage.setItem("data",JSON.stringify(d));
-
- if(navigator.vibrate){
-  navigator.vibrate(10);
- }
-}
-
-// ADAPTIVE
-function getAdaptiveAdvice(data){
-
- let last = data.slice(-5).map(d=>d.state);
-
- if(last.includes("purple") && last.includes("red")){
-  return "pressure → overwhelm. intervene earlier.";
- }
-
- if(last.includes("orange") && last.includes("blue")){
-  return "stress → shutdown. build recovery.";
- }
-
- if(last.includes("yellow") && last.includes("purple")){
-  return "input overload → pressure.";
- }
-
- return "your system is adapting.";
 }
 
 // INSIGHT
 function updateInsight(){
 
- let d = JSON.parse(localStorage.getItem("data")||"[]");
+ let d=JSON.parse(localStorage.getItem("data")||"[]");
 
- if(d.length < 3){
-  insightText.innerText="use the system to build clarity";
+ if(d.length<3){
+  insightText.innerText="build data";
   return;
  }
 
- let count={red:0,orange:0,purple:0,blue:0,yellow:0};
+ let p=predictState(d);
 
- d.forEach(e=>count[e.state]++);
+ insightText.innerText=p || "stable pattern";
+}
 
- let top = Object.keys(count).reduce((a,b)=>count[a]>count[b]?a:b);
+// 🔒 LOCK MODE
+function lockMode(){
+ document.getElementById("lock").style.display="flex";
+ document.getElementById("lock").innerText="breathe\n\n1 step only";
+}
 
- let advice = getAdaptiveAdvice(d);
-
- insightText.innerText =
-  "dominant: "+top+
-  "\n\n"+advice;
+function exitLock(){
+ document.getElementById("lock").style.display="none";
 }
 
 </script>
