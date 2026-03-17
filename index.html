@@ -1,172 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Architect OS ∞ v8.0</title>
-    <style>
-        :root { 
-            --blue: #60a5fa; --red: #f87171; --green: #4ade80; 
-            --yellow: #facc15; --orange: #fb923c; --purple: #c084fc;
-            --bg: #020617; --card: rgba(30, 41, 59, 0.5);
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architect OS ∞ V14</title>
 
-        body {
-            margin: 0; font-family: -apple-system, sans-serif;
-            background: var(--bg); color: white; text-align: center;
-            transition: background 1s ease; overflow-x: hidden; min-height: 100vh;
-        }
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
 
-        .dashboard { padding: 20px; max-width: 450px; margin: auto; z-index: 10; }
-        
-        .card { 
-            background: var(--card); border-radius: 20px; padding: 20px; 
-            margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); 
-            backdrop-filter: blur(10px);
-        }
+<style>
+:root{
+ --green:#4ade80; --red:#f87171; --yellow:#facc15;
+ --blue:#60a5fa; --bg:#020617; --card:rgba(30,41,59,0.5);
+}
 
-        .small { font-size: 10px; opacity: 0.6; letter-spacing: 2px; text-transform: uppercase; }
+body{margin:0;font-family:-apple-system;background:var(--bg);color:white;text-align:center;}
+.dashboard{padding:20px;max-width:420px;margin:auto;}
 
-        .wave-container {
-            width: 100%; height: 60px; overflow: hidden; position: relative;
-            background: rgba(30, 41, 59, 0.3); border-radius: 10px; margin: 15px 0;
-        }
-        .wave-fill { position: absolute; bottom: 0; left: 0; width: 0%; height: 100%; background: var(--green); transition: width 0.5s ease; opacity: 0.2; }
-        
-        .reset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .reset-btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; }
+.card{background:var(--card);border-radius:20px;padding:20px;margin-bottom:15px;}
 
-        .modal {
-            position: fixed; inset: 0; background: rgba(2,6,23,0.98); 
-            display: none; justify-content: center; align-items: center;
-            flex-direction: column; z-index: 100; padding: 20px; backdrop-filter: blur(10px);
-        }
-        
-        .btn {
-            padding: 16px; margin: 10px auto; border: 1px solid rgba(255,255,255,0.1);
-            cursor: pointer; background: rgba(255,255,255,0.05);
-            border-radius: 14px; font-weight: bold; text-transform: uppercase;
-            font-size: 12px; width: 100%; box-sizing: border-box;
-        }
+.btn{
+ padding:14px;margin:6px 0;border-radius:10px;
+ border:none;width:100%;font-weight:bold;
+}
 
-        #truthAnchor { font-style: italic; border-left: 2px solid var(--blue); padding-left: 15px; margin: 20px 0; font-size: 14px; text-align: left; }
-    </style>
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.mode{
+ font-size:18px;
+ letter-spacing:3px;
+ margin-bottom:10px;
+}
+</style>
 </head>
+
 <body>
 
 <div class="dashboard">
-    <div class="card" id="compassCard">
-        <h3 class="small" style="color: var(--green);">MORNING_COMPASS</h3>
-        <p style="font-size: 14px;">How is your internal weather waking up?</p>
-        <div class="reset-grid">
-            <button class="reset-btn" style="background: var(--yellow);" onclick="openLog('YELLOW', true)">FOGGY</button>
-            <button class="reset-btn" style="background: var(--red);" onclick="openLog('RED', true)">HEAVY</button>
-            <button class="reset-btn" style="background: var(--orange);" onclick="openLog('ORANGE', true)">UNSAFE</button>
-            <button class="reset-btn" style="background: var(--purple);" onclick="openLog('PURPLE', true)">RACING</button>
-        </div>
-    </div>
 
-    <div class="card">
-        <h2 id="level" style="margin:0; letter-spacing: 4px; font-weight: 200;">ARCHITECT_OS</h2>
-        <div class="wave-container">
-            <div id="waveFill" class="wave-fill"></div>
-        </div>
-        <p id="insight" class="small">STATUS: STABLE</p>
-    </div>
-
-    <div class="card">
-        <h3 class="small" style="color: var(--blue);">MANUAL RESET</h3>
-        <div class="reset-grid">
-            <button class="reset-btn" style="background: var(--yellow);" onclick="openLog('YELLOW')">STATIC</button>
-            <button class="reset-btn" style="background: var(--red);" onclick="openLog('RED')">HEAT</button>
-            <button class="reset-btn" style="background: var(--orange);" onclick="openLog('ORANGE')">THREAT</button>
-            <button class="reset-btn" style="background: var(--purple);" onclick="openLog('PURPLE')">PRESSURE</button>
-            <button class="reset-btn" style="background: var(--blue);" onclick="openLog('BLUE')">SHUTDOWN</button>
-        </div>
-    </div>
-    
-    <div class="card" style="background: none; border: none;">
-        <div class="btn" style="border-color: var(--green); color: var(--green);" onclick="logMvs()">LOG MVS WIN</div>
-        <div class="btn" style="border-color: var(--purple); color: var(--purple);" onclick="showReflection()">NIGHTLY REFLECTION</div>
-    </div>
+<div class="card">
+<div id="mode" class="mode">MODE</div>
+<p id="status"></p>
 </div>
 
-<div id="logModal" class="modal">
-    <h2 id="logTitle" style="font-weight: 200; text-transform: uppercase;"></h2>
-    <div id="truthAnchor"></div>
-    <p id="affirmationBox" style="font-weight: bold; color: var(--green);"></p>
-    <div id="toolOptions" style="width: 100%;"></div>
-    <div class="btn" onclick="closeModal('logModal')">ABORT</div>
+<div class="card">
+<h3>Log State</h3>
+<div class="grid">
+<button class="btn" onclick="log('YELLOW')">Static</button>
+<button class="btn" onclick="log('RED')">Heat</button>
+<button class="btn" onclick="log('BLUE')">Shutdown</button>
+<button class="btn" onclick="log('GREEN')">Win</button>
+</div>
 </div>
 
-<div id="reflectModal" class="modal">
-    <h2 style="font-weight: 200;">DAILY AUDIT</h2>
-    <div id="reflectContent" style="text-align: left; font-size: 14px; margin: 20px 0;"></div>
-    <button class="btn" style="color: var(--red);" onclick="clearSystem()">SYSTEM RESET</button>
-    <button class="btn" onclick="closeModal('reflectModal')">CLOSE</button>
+<div class="card">
+<h3>Mode Actions</h3>
+<div id="actions"></div>
+</div>
+
+<div class="card">
+<button class="btn" onclick="reset()">Reset System</button>
+</div>
+
 </div>
 
 <script>
-const DATA_WAVE = {
-    'YELLOW': { scripture: "Phil 4:13: Christ strengthens me for this.", affirm: "I have strength for this one next step.", tools: ["Headphones", "Tiny Task"] },
-    'RED': { scripture: "Eph 1:4: I am chosen and wanted.", affirm: "I am loved beyond my feelings.", tools: ["Cold Water", "Paced Breath"] },
-    'ORANGE': { scripture: "Isa 43:1: I called you by name; you are mine.", affirm: "I am safe and claimed.", tools: ["Grounding", "Weight"] },
-    'PURPLE': { scripture: "2 Tim 1:7: God gave me a sound mind.", affirm: "I reject confusion.", tools: ["Reduce Scope", "2 Min Timer"] },
-    'BLUE': { scripture: "Ps 139:14: I am wonderfully made.", affirm: "I am not a burden.", tools: ["Rest", "Change Rooms"] }
-};
 
-function openLog(state, isMorning = false) {
-    const entry = DATA_WAVE[state];
-    document.getElementById("logTitle").innerText = isMorning ? "MORNING ANCHOR" : state;
-    document.getElementById("logTitle").style.color = `var(--${state.toLowerCase()})`;
-    document.getElementById("truthAnchor").innerText = entry.scripture;
-    document.getElementById("affirmationBox").innerText = entry.affirm;
-    const tools = document.getElementById("toolOptions");
-    tools.innerHTML = '';
-    entry.tools.forEach(t => {
-        const b = document.createElement("div"); b.className = "btn"; b.innerText = t;
-        b.onclick = () => { logEntry(state, t); closeModal('logModal'); if(isMorning) document.getElementById('compassCard').style.display='none'; };
-        tools.appendChild(b);
-    });
-    document.getElementById("logModal").style.display = "flex";
+// ---------- DATA ----------
+const WEIGHTS={YELLOW:8,RED:15,BLUE:16,GREEN:18};
+
+// ---------- LOG ----------
+function log(state){
+ let d=JSON.parse(localStorage.log||"[]");
+ d.push({t:Date.now(),state});
+ localStorage.log=JSON.stringify(d);
+ update();
 }
 
-function logEntry(state, tool) {
-    let d = JSON.parse(localStorage.resiliencyLog || "[]");
-    d.push({ t: Date.now(), state, tool });
-    localStorage.resiliencyLog = JSON.stringify(d);
-    updateUI();
+// ---------- GET TODAY ----------
+function getToday(){
+ let d=JSON.parse(localStorage.log||"[]");
+ let today=new Date().toDateString();
+ return d.filter(e=>new Date(e.t).toDateString()===today);
 }
 
-function showReflection() {
-    let d = JSON.parse(localStorage.resiliencyLog || "[]");
-    let today = new Date().toDateString();
-    let logs = d.filter(e => new Date(e.t).toDateString() === today);
-    let content = logs.length ? `Today you defeated <b>${logs.length}</b> spikes.<br><br>` : "Empty slate.";
-    logs.forEach(e => { content += `● ${e.state}: ${e.tool}<br>`; });
-    document.getElementById("reflectContent").innerHTML = content;
-    document.getElementById("reflectModal").style.display = "flex";
+// ---------- MODE DETECTION ----------
+function detectMode(){
+
+ let d=getToday().slice(-3);
+
+ if(d.length>=3 && d.every(e=>e.state==="RED"))
+  return "RECOVERY";
+
+ if(d.length>=2 && d.every(e=>e.state==="BLUE"))
+  return "RESET";
+
+ let score=d.reduce((s,e)=>s+(WEIGHTS[e.state]||10),0);
+
+ if(score>40) return "WORK";
+
+ return "SPIRITUAL";
 }
 
-function logMvs() {
-    let m = prompt("MVS Win:");
-    if(m) logEntry('GREEN', m);
+// ---------- ACTIONS ----------
+function renderActions(mode){
+
+ let box=document.getElementById("actions");
+ box.innerHTML="";
+
+ let actions=[];
+
+ if(mode==="WORK"){
+  actions=["Start Deep Work","Finish Task","Avoid Distraction"];
+ }
+
+ if(mode==="RECOVERY"){
+  actions=["Cold Water","Breathing","Sit Down"];
+ }
+
+ if(mode==="SPIRITUAL"){
+  actions=["Pray","Reflect","Read Scripture"];
+ }
+
+ if(mode==="RESET"){
+  actions=["Lie Down","No Input","Full Stop"];
+ }
+
+ actions.forEach(a=>{
+  let b=document.createElement("button");
+  b.className="btn";
+  b.innerText=a;
+  box.appendChild(b);
+ });
 }
 
-function clearSystem() {
-    if(confirm("Reset System?")) { localStorage.removeItem('resiliencyLog'); location.reload(); }
+// ---------- UPDATE ----------
+function update(){
+
+ let mode=detectMode();
+
+ document.getElementById("mode").innerText=mode;
+
+ let status="";
+
+ if(mode==="WORK") status="Execution mode active";
+ if(mode==="RECOVERY") status="Regulation required";
+ if(mode==="SPIRITUAL") status="Center yourself";
+ if(mode==="RESET") status="System override";
+
+ document.getElementById("status").innerText=status;
+
+ renderActions(mode);
 }
 
-function closeModal(id) { document.getElementById(id).style.display = "none"; }
-
-function updateUI() {
-    let d = JSON.parse(localStorage.resiliencyLog || "[]");
-    let today = new Date().toDateString();
-    let score = Math.min(100, d.filter(e => new Date(e.t).toDateString() === today).length * 10);
-    document.getElementById("waveFill").style.width = score + "%";
+// ---------- RESET ----------
+function reset(){
+ if(confirm("Reset all data?")){
+  localStorage.clear();
+  location.reload();
+ }
 }
 
-updateUI();
+// ---------- PWA ----------
+if("serviceWorker" in navigator){
+ navigator.serviceWorker.register("sw.js");
+}
+
+update();
+
 </script>
 </body>
 </html>
