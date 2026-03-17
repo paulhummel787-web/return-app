@@ -4,183 +4,138 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Architect OS</title>
-
 <link rel="manifest" href="manifest.json">
 
 <style>
-:root { --neon-blue:#60a5fa; --neon-red:#f87171; --neon-green:#4ade80; }
+:root { --blue:#60a5fa; --red:#f87171; --green:#4ade80; }
 
 body {
-    margin:0; font-family:'Courier New', monospace;
-    background:#020617; color:white; overflow:hidden;
+    margin:0; font-family:monospace;
+    background:#020617; color:white; text-align:center;
 }
 
-/* CRT effect */
-body::before {
-    content:""; position:fixed; inset:0;
-    background:linear-gradient(rgba(0,0,0,0)50%,rgba(0,0,0,0.1)50%);
-    background-size:100% 3px;
-    pointer-events:none; z-index:9999;
-}
-
-/* glitch distort */
-.glitch-distort { animation: distort 0.2s infinite; }
-@keyframes distort {
-    0%{transform:skew(0deg);}
-    50%{transform:skew(3deg);}
-    100%{transform:skew(0deg);}
-}
-
-#app { padding:40px 20px; text-align:center; }
-
-.btn {
-    padding:15px; margin:10px auto; max-width:200px;
-    background:#ffffff08; border:1px solid #ffffff22;
-    cursor:pointer; letter-spacing:2px; font-size:12px;
-}
-
-input {
-    background:transparent; border:none;
-    border-bottom:1px solid #ffffff44;
-    color:var(--neon-blue); text-align:center;
-    padding:10px; margin-bottom:20px;
-}
-
-#shroud {
-    position:fixed; inset:0; background:black;
-    display:none; flex-direction:column;
-    justify-content:center; align-items:center;
-}
-
-#timer {
-    font-size:60px;
-    color:var(--neon-blue);
-    text-shadow:0 0 10px var(--neon-blue);
-}
-
-.glitch { animation: shake 0.2s infinite; color:var(--neon-red); }
+/* glitch */
+.glitch { animation: shake 0.2s infinite; color: var(--red); }
 @keyframes shake {
     0%{transform:translate(0);}
     50%{transform:translate(2px,-2px);}
     100%{transform:translate(0);}
 }
+
+.glitch-distort { animation: distort 0.2s infinite; }
+@keyframes distort {
+    0%{transform:skew(0);}
+    50%{transform:skew(3deg);}
+    100%{transform:skew(0);}
+}
+
+.btn {
+    padding:15px; margin:10px auto;
+    border:1px solid #fff2; cursor:pointer;
+    max-width:200px;
+}
+
+#shroud {
+    position:fixed; inset:0;
+    background:black; display:none;
+    justify-content:center; align-items:center;
+    flex-direction:column;
+}
+
+#timer { font-size:50px; color:var(--blue); }
 </style>
 </head>
 
 <body>
 
-<div id="app">
-    <h2 id="level">ARCHITECT_OS</h2>
-    <p id="streak">STREAK: 0</p>
+<h2 id="level">ARCHITECT_OS</h2>
+<p id="streak">STREAK: 0</p>
 
-    <input id="foxInput" placeholder="TARGET">
+<input id="foxInput" placeholder="TARGET">
 
-    <div class="btn" onclick="startHunt('red')" style="color:var(--neon-red)">[ RED ]</div>
-    <div class="btn" onclick="startHunt('blue')" style="color:var(--neon-blue)">[ BLUE ]</div>
+<div class="btn" onclick="startHunt('red')">RED</div>
+<div class="btn" onclick="startHunt('blue')">BLUE</div>
 
-    <p id="insight">STATUS: IDLE</p>
-</div>
+<p id="insight">STATUS</p>
 
 <div id="shroud">
-    <p id="anchor"></p>
     <h2 id="step"></h2>
-    <div id="timer">--:--</div>
+    <div id="timer"></div>
     <div class="btn" onclick="nextStep()">CONTINUE</div>
     <div class="btn" onclick="endSession(false)">ABORT</div>
 </div>
 
 <script>
-/* REQUEST NOTIFICATION PERMISSION */
-if ("Notification" in window) {
-    Notification.requestPermission();
-}
-
-/* REGISTER BACKGROUND SYNC */
-if ("serviceWorker" in navigator && "SyncManager" in window) {
-    navigator.serviceWorker.ready.then(sw => {
-        return sw.sync.register("sync-sessions");
-    });
-}
-    let steps=[], i=0, timer, huntActive=false;
+let steps=[], i=0, timer, huntActive=false;
+let lastActivity=Date.now();
+let escalationLevel=0;
 let audioCtx;
 
-/* AUDIO FIX */
-function playTone(freq,duration){
-    if(!audioCtx){
-        audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-    }
-    let osc=audioCtx.createOscillator();
-    let gain=audioCtx.createGain();
-    osc.frequency.value=freq;
-    gain.gain.value=0.05;
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.start();
-    osc.stop(audioCtx.currentTime+duration);
+/* AUDIO */
+function playTone(freq,d){
+    if(!audioCtx) audioCtx=new AudioContext();
+    let o=audioCtx.createOscillator();
+    let g=audioCtx.createGain();
+    o.frequency.value=freq;
+    g.gain.value=0.05;
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+d);
+}
+
+/* NOTIFICATIONS */
+if ("Notification" in window) Notification.requestPermission();
+
+function sendSmartNotification(msg){
+    if(Notification.permission!=="granted") return;
+
+    navigator.serviceWorker.getRegistration().then(reg=>{
+        if(reg){
+            reg.showNotification("ARCHITECT OS",{
+                body:msg,
+                vibrate:[200,100,200],
+                tag:"alert",
+                renotify:true
+            });
+        }
+    });
 }
 
 /* PROTOCOLS */
-const baseProtocols={
-    red:["COLD SHOCK","MOVE FAST","CLEAR SPACE"],
-    blue:["DIM LIGHT","POSTURE","BREATH"]
+const base={
+    red:["MOVE","CLEAR","FOCUS"],
+    blue:["CALM","ALIGN","BREATH"]
 };
-
-const anchors={
-    red:"EXECUTE",
-    blue:"CALIBRATE"
-};
-
-/* GLITCH SYSTEM */
-function triggerSystemGlitch(){
-    let texts=[
-        "ERROR",
-        "SIGNAL LOST",
-        "SYSTEM FAILURE",
-        "RECALIBRATING"
-    ];
-
-    document.body.classList.add('glitch-distort');
-
-    let interval=setInterval(()=>{
-        document.getElementById('insight').innerText=
-            texts[Math.floor(Math.random()*texts.length)];
-    },100);
-
-    setTimeout(()=>{
-        clearInterval(interval);
-        document.body.classList.remove('glitch-distort');
-        updateUI();
-    },1200);
-}
 
 /* START */
 function startHunt(type){
     huntActive=true;
-    playTone(150,0.1);
+    playTone(200,0.1);
 
-    let fox=document.getElementById('foxInput').value||"EXECUTION";
+    enforceLock();
 
-    let unzip=prompt("SUBTASKS","STEP1, STEP2");
-    let physical=unzip?unzip.split(',').map(s=>s.trim()):["START"];
+    let fox=document.getElementById("foxInput").value||"EXECUTE";
 
-    steps=[...baseProtocols[type],...physical,"2 MIN: "+fox];
+    let d=JSON.parse(localStorage.sessions||"[]");
+    let fails=d.slice(-5).filter(s=>!s.completed).length;
+
+    if(fails>=3){
+        steps=["SMALL STEP","JUST START","2 MIN: "+fox];
+    } else {
+        let extra=prompt("SUBTASKS","STEP1,STEP2");
+        let arr=extra?extra.split(","):["START"];
+        steps=[...base[type],...arr,"2 MIN: "+fox];
+    }
 
     i=0;
-    document.getElementById('shroud').style.display='flex';
-    document.getElementById('anchor').innerText=anchors[type];
-
+    document.getElementById("shroud").style.display="flex";
     runStep();
     logStart(type,fox);
 }
 
+/* STEPS */
 function runStep(){
-    document.getElementById('step').innerText=steps[i];
-
-    if(steps[i].includes("2 MIN")){
-        startTimer(120);
-    } else {
-        document.getElementById('timer').innerText="--:--";
-    }
+    document.getElementById("step").innerText=steps[i];
+    if(steps[i].includes("2 MIN")) startTimer(120);
 }
 
 function nextStep(){
@@ -194,46 +149,45 @@ function nextStep(){
 function startTimer(s){
     clearInterval(timer);
     let t=s;
-
     timer=setInterval(()=>{
         let m=Math.floor(t/60),sec=t%60;
-        document.getElementById('timer').innerText=
-            `${m}:${sec<10?'0':''}${sec}`;
-
+        document.getElementById("timer").innerText=
+        `${m}:${sec<10?'0':''}${sec}`;
         if(t--<=0){
             clearInterval(timer);
-            playTone(800,0.2);
-            setTimeout(()=>endSession(true),800);
+            endSession(true);
         }
     },1000);
-}
-
-/* REENTRY */
-function triggerReentry(){
-    setTimeout(()=>{
-        steps=["PAUSE","SMALL ACTION","RESTART"];
-        i=0;
-        document.getElementById('shroud').style.display='flex';
-        document.getElementById('anchor').innerText="RE-ENTRY";
-        runStep();
-    },800);
 }
 
 /* END */
 function endSession(success){
     huntActive=false;
     clearInterval(timer);
-    document.getElementById('shroud').style.display='none';
+    document.getElementById("shroud").style.display="none";
 
     if(success){
+        rewardPulse();
         updateStreak();
     } else {
-        triggerSystemGlitch();
-        triggerReentry();
+        triggerGlitch();
     }
 
     logEnd(success);
     updateUI();
+}
+
+/* GLITCH */
+function triggerGlitch(){
+    document.body.classList.add("glitch-distort");
+    setTimeout(()=>document.body.classList.remove("glitch-distort"),1000);
+}
+
+/* LOCK */
+function enforceLock(){
+    if(document.body.requestFullscreen){
+        document.body.requestFullscreen().catch(()=>{});
+    }
 }
 
 /* DATA */
@@ -245,68 +199,78 @@ function logStart(type,fox){
 
 function logEnd(success){
     let d=JSON.parse(localStorage.sessions||"[]");
-    if(d.length)d[d.length-1].completed=success;
+    if(d.length) d[d.length-1].completed=success;
     localStorage.sessions=JSON.stringify(d);
 }
 
 /* STREAK */
 function updateStreak(){
     let today=new Date().toDateString();
-    if(localStorage.last!=today){
+    if(localStorage.last!==today){
         localStorage.streak=(+localStorage.streak||0)+1;
         localStorage.last=today;
     }
 }
 
-/* AVOIDANCE */
-function detectAvoidance(){
+/* SCORE */
+function focusScore(){
     let d=JSON.parse(localStorage.sessions||"[]");
-    let counts={};
+    if(!d.length) return 0;
+    let s=d.filter(x=>x.completed).length;
+    return Math.round((s/d.length)*100);
+}
 
-    d.forEach(s=>{
-        if(!s.completed){
-            counts[s.fox]=(counts[s.fox]||0)+1;
-        }
-    });
-
-    let worst=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
-    return worst?worst[0]:null;
+/* PATTERN */
+function pattern(){
+    let d=JSON.parse(localStorage.sessions||"[]").slice(-5);
+    if(d.every(x=>!x.completed)) return "OVERLOAD";
+    if(d.filter(x=>x.completed).length>=4) return "HIGH PERFORMANCE";
 }
 
 /* UI */
 function updateUI(){
-    document.getElementById('streak').innerText=
-        "STREAK: "+(localStorage.streak||0);
+    document.getElementById("streak").innerText="STREAK: "+(localStorage.streak||0);
+    document.getElementById("level").innerText="FOCUS: "+focusScore()+"%";
 
-    let d=JSON.parse(localStorage.sessions||"[]");
-    let insight="STABLE";
-
-    if(d.length>3){
-        let fails=d.filter(s=>!s.completed).length;
-        insight=fails/d.length>0.4?"SIMPLIFY":"OPTIMAL";
-    }
-
-    let avoid=detectAvoidance();
-    if(avoid) insight+=" | AVOIDING: "+avoid;
-
-    document.getElementById('insight').innerText=insight;
+    let p=pattern();
+    document.getElementById("insight").innerText=p||"ACTIVE";
 }
 
-/* LOCK SYSTEM */
-document.addEventListener("visibilitychange",()=>{
-    if(document.hidden && huntActive){
-        triggerSystemGlitch();
-        playTone(80,0.5);
-    }
+/* IDLE SYSTEM */
+["click","keydown","touchstart"].forEach(e=>{
+    document.addEventListener(e,()=>{
+        lastActivity=Date.now();
+        escalationLevel=0;
+    });
 });
 
-window.onbeforeunload=function(){
-    if(huntActive) return "Mission active";
-};
+setInterval(()=>{
+    let idle=Date.now()-lastActivity;
+
+    if(idle>120000 && !huntActive){
+        escalationLevel++;
+
+        let msgs=[
+            "SYSTEM IDLE",
+            "YOU ARE DRIFTING",
+            "RETURN NOW",
+            "ACTION REQUIRED"
+        ];
+
+        playTone(150+escalationLevel*100,0.2);
+
+        sendSmartNotification(
+            msgs[Math.min(escalationLevel-1,msgs.length-1)]
+        );
+
+        triggerGlitch();
+        lastActivity=Date.now();
+    }
+},10000);
 
 /* SW */
-if('serviceWorker' in navigator){
-    navigator.serviceWorker.register('sw.js');
+if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js");
 }
 
 updateUI();
