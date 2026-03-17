@@ -8,13 +8,26 @@
     body {
       margin: 0;
       font-family: -apple-system;
-      background: radial-gradient(circle at center, #1c1f26 0%, #0b0d11 80%);
-      color: #e8e6e3;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       text-align: center;
+      color: #e8e6e3;
+      transition: background 2s ease;
+    }
+
+    /* THEMES */
+    .morning {
+      background: radial-gradient(circle at center, #2a2f3a, #0e1015);
+    }
+
+    .day {
+      background: radial-gradient(circle at center, #1c1f26, #0b0d11);
+    }
+
+    .night {
+      background: radial-gradient(circle at center, #0a0c10, #000000);
     }
 
     #app {
@@ -24,61 +37,63 @@
 
     h2 {
       font-weight: 400;
-      opacity: 0.6;
-      letter-spacing: 2px;
-      margin-bottom: 40px;
+      opacity: 0.5;
+      letter-spacing: 3px;
+      margin-bottom: 50px;
     }
 
     .choice {
       margin: 14px 0;
       padding: 16px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      color: white;
-      font-size: 16px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.06);
+      font-size: 15px;
     }
 
     .breath {
-      width: 160px;
-      height: 160px;
+      width: 180px;
+      height: 180px;
       margin: 40px auto;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0.02));
-      animation: breathe 7s ease-in-out infinite;
+      background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0.01));
+      animation: breathe 8s ease-in-out infinite;
+      box-shadow: 0 0 60px rgba(255,255,255,0.05);
     }
 
     @keyframes breathe {
-      0% { transform: scale(0.85); opacity: 0.4; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(0.85); opacity: 0.4; }
+      0% { transform: scale(0.85); opacity: 0.3; }
+      50% { transform: scale(1.25); opacity: 1; }
+      100% { transform: scale(0.85); opacity: 0.3; }
     }
 
     #text {
       font-size: 20px;
-      line-height: 1.6;
+      line-height: 1.7;
       min-height: 120px;
       padding: 0 20px;
+      opacity: 0.9;
     }
 
     #scripture {
-      font-size: 14px;
-      opacity: 0.5;
+      font-size: 13px;
+      opacity: 0.4;
       margin-top: 10px;
     }
 
     .small {
-      margin-top: 30px;
-      padding: 10px 18px;
+      margin-top: 40px;
+      padding: 10px 20px;
       border-radius: 999px;
       border: none;
-      background: rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.05);
       color: white;
     }
+
   </style>
 </head>
 
-<body>
+<body id="body">
 
 <div id="app">
 
@@ -103,7 +118,7 @@
 
 <!-- END -->
 <div id="end" style="display:none;">
-  <p>stay here a moment</p>
+  <p>remain here a moment</p>
   <button class="small" onclick="home()">return</button>
 </div>
 
@@ -111,17 +126,28 @@
 
 <script>
 
-let state="", steps=[], i=0;
+// 🌅 TIME THEMES
+function setTheme(){
+  let h = new Date().getHours();
+  let b = document.getElementById("body");
 
-// voice
+  if(h < 10) b.className = "morning";
+  else if(h < 18) b.className = "day";
+  else b.className = "night";
+}
+setTheme();
+
+// 🎧 voice
 function speak(t){
  let m=new SpeechSynthesisUtterance(t);
- m.rate=0.8;
+ m.rate=0.75;
  speechSynthesis.cancel();
  speechSynthesis.speak(m);
 }
 
-// start
+let state="",steps=[],i=0;
+
+// 🚀 start
 function start(s){
  state=s;
  document.getElementById("home").style.display="none";
@@ -131,14 +157,15 @@ function start(s){
  show();
 }
 
-// steps (simpler, deeper tone)
+// 🧠 clarity + spiritual blend
 function build(){
 
  if(state==="heat"){
   steps=[
-   "this is a lot",
-   "slow your breathing",
+   "this is your system overwhelmed",
+   "your body is trying to protect you",
    "you are not in danger",
+   "slow your breath",
    "God is your refuge",
    "stay here"
   ];
@@ -146,19 +173,19 @@ function build(){
 
  if(state==="threat"){
   steps=[
-   "something feels wrong",
+   "your mind is sensing danger",
+   "this does not mean danger is real",
    "look around slowly",
-   "you are safe enough",
-   "God is your protector",
-   "return to now"
+   "orient to the present",
+   "God is your protector"
   ];
  }
 
  if(state==="pressure"){
   steps=[
-   "too much at once",
-   "you don’t need to carry it all",
-   "just one step",
+   "this is too much at once",
+   "you are not meant to carry all of this",
+   "reduce it to one step",
    "God is not rushing you",
    "begin small"
   ];
@@ -166,38 +193,39 @@ function build(){
 
  if(state==="gravity"){
   steps=[
-   "you feel heavy",
-   "that’s okay",
+   "this is heaviness",
+   "your system is slowing down",
+   "this is not failure",
    "rest here",
-   "God is near",
-   "you are not alone"
+   "God is near"
   ];
  }
 
  if(state==="static"){
   steps=[
-   "too much noise",
+   "this is overstimulation",
+   "too much input",
    "slow everything down",
    "focus on one thing",
-   "God brings clarity",
-   "be still"
+   "God brings clarity"
   ];
  }
 
 }
 
-// scripture
+// 📖 scripture rotation
 function getScripture(){
  const v=[
   "Be still and know that I am God",
-  "The Lord is my shepherd",
+  "The Lord is close to the brokenhearted",
+  "Cast your cares on Him",
   "Come to me and I will give you rest",
   "God is our refuge and strength"
  ];
  return v[Math.floor(Math.random()*v.length)];
 }
 
-// show
+// 👁 show
 function show(){
  let t=steps[i];
  document.getElementById("text").innerText=t;
@@ -205,7 +233,7 @@ function show(){
  speak(t);
 }
 
-// next
+// ➡️ next
 function next(){
  i++;
  if(i<steps.length){
@@ -216,7 +244,7 @@ function next(){
  }
 }
 
-// home
+// 🔄 home
 function home(){
  location.reload();
 }
