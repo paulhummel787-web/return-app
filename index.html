@@ -1,280 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Architect OS</title>
-<link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Architect OS ∞ v7.0 (Resiliency Monitor)</title>
+    <style>
+        :root { 
+            --blue: #60a5fa; --red: #f87171; --green: #4ade80; 
+            --yellow: #facc15; --orange: #fb923c; --purple: #c084fc;
+            --bg: #020617; --card: rgba(30, 41, 59, 0.5);
+        }
 
-<style>
-:root { --blue:#60a5fa; --red:#f87171; --green:#4ade80; }
+        body {
+            margin: 0; font-family: -apple-system, sans-serif;
+            background: var(--bg); color: white; text-align: center;
+            transition: background 1s ease, color 1s ease;
+            overflow-x: hidden; height: 100vh;
+        }
 
-body {
-    margin:0; font-family:monospace;
-    background:#020617; color:white; text-align:center;
-}
+        .dashboard { padding: 20px; max-width: 450px; margin: auto; position: relative; z-index: 10; }
+        
+        .card { 
+            background: var(--card); border-radius: 20px; padding: 20px; 
+            margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.1); 
+            backdrop-filter: blur(10px);
+        }
 
-/* glitch */
-.glitch { animation: shake 0.2s infinite; color: var(--red); }
-@keyframes shake {
-    0%{transform:translate(0);}
-    50%{transform:translate(2px,-2px);}
-    100%{transform:translate(0);}
-}
+        .glitch-distort { animation: distort 0.2s 3; }
+        @keyframes distort {
+            0% { transform: translate(0); }
+            20% { transform: translate(-5px, 5px); }
+            40% { transform: translate(-5px, -5px); }
+            60% { transform: translate(5px, 5px); }
+            80% { transform: translate(5px, -5px); }
+            100% { transform: translate(0); }
+        }
 
-.glitch-distort { animation: distort 0.2s infinite; }
-@keyframes distort {
-    0%{transform:skew(0);}
-    50%{transform:skew(3deg);}
-    100%{transform:skew(0);}
-}
+        .small { font-size: 10px; opacity: 0.6; letter-spacing: 2px; text-transform: uppercase; }
 
-.btn {
-    padding:15px; margin:10px auto;
-    border:1px solid #fff2; cursor:pointer;
-    max-width:200px;
-}
+        /* The Resiliency Wave */
+        .wave-container {
+            width: 100%; height: 60px; overflow: hidden; position: relative;
+            background: rgba(30, 41, 59, 0.3); border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1); margin: 15px 0;
+        }
+        .wave {
+            position: absolute; bottom: 0; left: 0; width: 200%; height: 100%;
+            background: linear-gradient(90deg, var(--green) 0%, var(--blue) 100%);
+            opacity: 0.3; border-radius: 35%;
+            animation: wave-move 10s infinite linear;
+        }
+        .wave-fill { position: absolute; bottom: 0; left: 0; width: 0%; height: 100%; background: var(--green); transition: width 0.5s ease; opacity: 0.1; }
+        
+        @keyframes wave-move {
+            0% { transform: translateX(0) rotate(0deg); }
+            100% { transform: translateX(-50%) rotate(360deg); }
+        }
 
-#shroud {
-    position:fixed; inset:0;
-    background:black; display:none;
-    justify-content:center; align-items:center;
-    flex-direction:column;
-}
+        .reset-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .reset-btn { padding: 12px; border-radius: 10px; border: none; font-weight: bold; cursor: pointer; font-size: 10px; opacity: 0.9; transition: 0.2s;}
+        .reset-btn:active { opacity: 1; transform: scale(0.96); }
 
-#timer { font-size:50px; color:var(--blue); }
-</style>
+        /* Modals (Log Entry) */
+        .modal {
+            position: fixed; inset: 0; background: rgba(2,6,23,0.98); 
+            display: none; justify-content: center; align-items: center;
+            flex-direction: column; z-index: 100; padding: 20px; backdrop-filter: blur(10px);
+        }
+        
+        .btn {
+            padding: 16px; margin: 10px auto; border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer; background: rgba(255,255,255,0.05);
+            border-radius: 14px; font-weight: bold; text-transform: uppercase;
+            font-size: 12px; letter-spacing: 1px; transition: 0.2s; width: 100%; box-sizing: border-box;
+        }
+        .btn:active { transform: scale(0.96); background: rgba(255,255,255,0.1); }
+    </style>
 </head>
-
 <body>
 
-<h2 id="level">ARCHITECT_OS</h2>
-<p id="streak">STREAK: 0</p>
+<div class="dashboard">
+    <div class="card" style="margin-top: 20px;">
+        <h2 id="level" style="margin:0; letter-spacing: 4px; font-weight: 200;">RESILIENCY_MONITOR</h2>
+        
+        <div class="wave-container">
+            <div id="waveFill" class="wave-fill"></div>
+            <div class="wave"></div>
+            <div class="wave" style="animation-delay: -5s; opacity: 0.2; bottom: 2px;"></div>
+        </div>
 
-<input id="foxInput" placeholder="TARGET">
+        <p id="insight" class="small" style="color: var(--blue);">STATUS: STABLE</p>
+    </div>
 
-<div class="btn" onclick="startHunt('red')">RED</div>
-<div class="btn" onclick="startHunt('blue')">BLUE</div>
+    <div class="card">
+        <h3 class="small" style="color: var(--blue);">THE "ARCHITECT" AUDIT (Manual Override)</h3>
+        <p class="small">Log a "Manual Reset" to update the wave.</p>
+        <div class="reset-grid">
+            <button class="reset-btn" style="background: var(--yellow); color: black;" onclick="openLog('YELLOW')">STATIC (ADHD)</button>
+            <button class="reset-btn" style="background: var(--red); color: black;" onclick="openLog('RED')">HEAT (BPD)</button>
+            <button class="reset-btn" style="background: var(--orange); color: black;" onclick="openLog('ORANGE')">THREAT (CPTSD)</button>
+            <button class="reset-btn" style="background: var(--purple); color: black;" onclick="openLog('PURPLE')">PRESSURE (GAD)</button>
+            <button class="reset-btn" style="background: var(--blue); color: black;" onclick="openLog('BLUE')">SHUTDOWN (MDD)</button>
+        </div>
+    </div>
+    
+    <div class="card" style="background: none; border: none;">
+        <p id="dailyMvs" class="small" style="color: var(--green);"></p>
+        <div class="btn" style="border-color: var(--green); color: var(--green);" onclick="logMvs()">LOG MY MVS WIN (One Small Move)</div>
+    </div>
+</div>
 
-<p id="insight">STATUS</p>
-
-<div id="shroud">
-    <h2 id="step"></h2>
-    <div id="timer"></div>
-    <div class="btn" onclick="nextStep()">CONTINUE</div>
-    <div class="btn" onclick="endSession(false)">ABORT</div>
+<div id="logModal" class="modal">
+    <h2 id="logTitle" style="font-weight: 200; text-transform: uppercase; letter-spacing: 2px;"></h2>
+    <p id="logDesc" class="small" style="margin-bottom: 30px;"></p>
+    
+    <p class="small" style="color: var(--blue); margin-bottom: 10px;">Select your "Manual Reset" tool:</p>
+    <div id="toolOptions" style="display: flex; flex-direction: column; gap: 10px; width: 100%;">
+        </div>
+    
+    <div class="btn" style="margin-top: 30px;" onclick="closeLog(false)">ABORT</div>
 </div>
 
 <script>
-let steps=[], i=0, timer, huntActive=false;
-let lastActivity=Date.now();
-let escalationLevel=0;
-let audioCtx;
-
-/* AUDIO */
-function playTone(freq,d){
-    if(!audioCtx) audioCtx=new AudioContext();
-    let o=audioCtx.createOscillator();
-    let g=audioCtx.createGain();
-    o.frequency.value=freq;
-    g.gain.value=0.05;
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(); o.stop(audioCtx.currentTime+d);
-}
-
-/* NOTIFICATIONS */
-if ("Notification" in window) Notification.requestPermission();
-
-function sendSmartNotification(msg){
-    if(Notification.permission!=="granted") return;
-
-    navigator.serviceWorker.getRegistration().then(reg=>{
-        if(reg){
-            reg.showNotification("ARCHITECT OS",{
-                body:msg,
-                vibrate:[200,100,200],
-                tag:"alert",
-                renotify:true
-            });
-        }
-    });
-}
-
-/* PROTOCOLS */
-const base={
-    red:["MOVE","CLEAR","FOCUS"],
-    blue:["CALM","ALIGN","BREATH"]
+const STATE_COLORS = { YELLOW: '--yellow', RED: '--red', ORANGE: '--orange', PURPLE: '--purple', BLUE: '--blue' };
+const PROTOCOLS = {
+    'YELLOW': ["Headphones On (Pink Noise)", "One tiny task (MVS)"],
+    'RED': ["Ice-Cold Water to face", "Paced Breathing (4-7-8)"],
+    'ORANGE': ["Grounding (5-4-3-2-1)", "Weighted Blanket"],
+    'PURPLE': ["Reduce Scope by 90%", "Next 2 mins only"],
+    'BLUE': ["Rest (No Guilt)", "Change Rooms"]
 };
 
-/* START */
-function startHunt(type){
-    huntActive=true;
-    playTone(200,0.1);
+let currentLogState = null;
 
-    enforceLock();
+function playTone(freq, d, type="sine") {
+    try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let o = audioCtx.createOscillator();
+        let g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(0.05, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + d);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(); o.stop(audioCtx.currentTime + d);
+    } catch(e) {}
+}
 
-    let fox=document.getElementById("foxInput").value||"EXECUTE";
+function openLog(state) {
+    currentLogState = state;
+    playTone(150, 0.2);
+    
+    document.getElementById("logTitle").innerText = `${state} INTERVENTION`;
+    document.getElementById("logTitle").style.color = `var(${STATE_COLORS[state]})`;
+    document.getElementById("logDesc").innerText = "Log your regulation to update the wave.";
+    
+    const toolOptions = document.getElementById("toolOptions");
+    toolOptions.innerHTML = ''; // Clear previous options
+    
+    PROTOCOLS[state].forEach(tool => {
+        const btn = document.createElement("div");
+        btn.className = "btn";
+        btn.innerText = tool;
+        btn.style.borderColor = `var(${STATE_COLORS[state]})`;
+        btn.onclick = () => closeLog(true, tool);
+        toolOptions.appendChild(btn);
+    });
+    
+    document.getElementById("logModal").style.display = "flex";
+}
 
-    let d=JSON.parse(localStorage.sessions||"[]");
-    let fails=d.slice(-5).filter(s=>!s.completed).length;
-
-    if(fails>=3){
-        steps=["SMALL STEP","JUST START","2 MIN: "+fox];
+function closeLog(success, tool = null) {
+    document.getElementById("logModal").style.display = "none";
+    if (success) {
+        logResiliency(currentLogState, tool);
+        document.body.classList.add("glitch-distort");
+        setTimeout(() => document.body.classList.remove("glitch-distort"), 300);
+        playTone(600, 0.3);
     } else {
-        let extra=prompt("SUBTASKS","STEP1,STEP2");
-        let arr=extra?extra.split(","):["START"];
-        steps=[...base[type],...arr,"2 MIN: "+fox];
+        playTone(80, 0.4, "square");
     }
-
-    i=0;
-    document.getElementById("shroud").style.display="flex";
-    runStep();
-    logStart(type,fox);
-}
-
-/* STEPS */
-function runStep(){
-    document.getElementById("step").innerText=steps[i];
-    if(steps[i].includes("2 MIN")) startTimer(120);
-}
-
-function nextStep(){
-    i++;
-    playTone(600,0.05);
-    if(i<steps.length) runStep();
-    else endSession(true);
-}
-
-/* TIMER */
-function startTimer(s){
-    clearInterval(timer);
-    let t=s;
-    timer=setInterval(()=>{
-        let m=Math.floor(t/60),sec=t%60;
-        document.getElementById("timer").innerText=
-        `${m}:${sec<10?'0':''}${sec}`;
-        if(t--<=0){
-            clearInterval(timer);
-            endSession(true);
-        }
-    },1000);
-}
-
-/* END */
-function endSession(success){
-    huntActive=false;
-    clearInterval(timer);
-    document.getElementById("shroud").style.display="none";
-
-    if(success){
-        rewardPulse();
-        updateStreak();
-    } else {
-        triggerGlitch();
-    }
-
-    logEnd(success);
+    currentLogState = null;
     updateUI();
 }
 
-/* GLITCH */
-function triggerGlitch(){
-    document.body.classList.add("glitch-distort");
-    setTimeout(()=>document.body.classList.remove("glitch-distort"),1000);
-}
-
-/* LOCK */
-function enforceLock(){
-    if(document.body.requestFullscreen){
-        document.body.requestFullscreen().catch(()=>{});
+function logMvs() {
+    let mvs = prompt("Log your MVS (Minimum Viable Shift) - e.g., 'One sock in the bin':", "One physical move");
+    if (mvs) {
+        logResiliency('GREEN', `MVS: ${mvs}`);
+        updateUI();
+        playTone(880, 0.3);
+    } else {
+        playTone(50, 0.2);
     }
 }
 
-/* DATA */
-function logStart(type,fox){
-    let d=JSON.parse(localStorage.sessions||"[]");
-    d.push({t:Date.now(),type,fox,completed:false});
-    localStorage.sessions=JSON.stringify(d);
+function logResiliency(state, tool) {
+    let d = JSON.parse(localStorage.resiliencyLog || "[]");
+    d.push({ t: Date.now(), state, tool });
+    localStorage.resiliencyLog = JSON.stringify(d);
 }
 
-function logEnd(success){
-    let d=JSON.parse(localStorage.sessions||"[]");
-    if(d.length) d[d.length-1].completed=success;
-    localStorage.sessions=JSON.stringify(d);
+function getDailyScore() {
+    let d = JSON.parse(localStorage.resiliencyLog || "[]");
+    let today = new Date().toDateString();
+    
+    let dailyLog = d.filter(entry => new Date(entry.t).toDateString() === today);
+    let totalEntries = dailyLog.length;
+    
+    // Max 10 entries count for score (10% per entry)
+    let score = Math.min(100, totalEntries * 10);
+    return score;
 }
 
-/* STREAK */
-function updateStreak(){
-    let today=new Date().toDateString();
-    if(localStorage.last!==today){
-        localStorage.streak=(+localStorage.streak||0)+1;
-        localStorage.last=today;
+function updateUI() {
+    let score = getDailyScore();
+    document.getElementById("level").innerText = "RESILIENCY: " + score + "%";
+    document.getElementById("waveFill").style.width = score + "%";
+    
+    let d = JSON.parse(localStorage.resiliencyLog || "[]");
+    let today = new Date().toDateString();
+    let mvsCount = d.filter(entry => entry.state === 'GREEN' && new Date(entry.t).toDateString() === today).length;
+    document.getElementById("dailyMvs").innerText = `DAILY MVS WINS: ${mvsCount}`;
+
+    if (score > 80) {
+        document.getElementById("insight").innerText = "STATUS: RESILIENT (SIGNAL HIGH)";
+        document.getElementById("insight").style.color = 'var(--green)';
+    } else if (score < 30 && score > 0) {
+        document.getElementById("insight").innerText = "STATUS: NOISE HIGH (REGULATE)";
+        document.getElementById("insight").style.color = 'var(--red)';
+    } else if (score === 0) {
+        document.getElementById("insight").innerText = "STATUS: STANDBY (CHECK WEATHER)";
+        document.getElementById("insight").style.color = 'var(--blue)';
+    } else {
+        document.getElementById("insight").innerText = "STATUS: SYSTEM STABLE";
+        document.getElementById("insight").style.color = 'var(--blue)';
     }
-}
-
-/* SCORE */
-function focusScore(){
-    let d=JSON.parse(localStorage.sessions||"[]");
-    if(!d.length) return 0;
-    let s=d.filter(x=>x.completed).length;
-    return Math.round((s/d.length)*100);
-}
-
-/* PATTERN */
-function pattern(){
-    let d=JSON.parse(localStorage.sessions||"[]").slice(-5);
-    if(d.every(x=>!x.completed)) return "OVERLOAD";
-    if(d.filter(x=>x.completed).length>=4) return "HIGH PERFORMANCE";
-}
-
-/* UI */
-function updateUI(){
-    document.getElementById("streak").innerText="STREAK: "+(localStorage.streak||0);
-    document.getElementById("level").innerText="FOCUS: "+focusScore()+"%";
-
-    let p=pattern();
-    document.getElementById("insight").innerText=p||"ACTIVE";
-}
-
-/* IDLE SYSTEM */
-["click","keydown","touchstart"].forEach(e=>{
-    document.addEventListener(e,()=>{
-        lastActivity=Date.now();
-        escalationLevel=0;
-    });
-});
-
-setInterval(()=>{
-    let idle=Date.now()-lastActivity;
-
-    if(idle>120000 && !huntActive){
-        escalationLevel++;
-
-        let msgs=[
-            "SYSTEM IDLE",
-            "YOU ARE DRIFTING",
-            "RETURN NOW",
-            "ACTION REQUIRED"
-        ];
-
-        playTone(150+escalationLevel*100,0.2);
-
-        sendSmartNotification(
-            msgs[Math.min(escalationLevel-1,msgs.length-1)]
-        );
-
-        triggerGlitch();
-        lastActivity=Date.now();
-    }
-},10000);
-
-/* SW */
-if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("sw.js");
 }
 
 updateUI();
 </script>
-
 </body>
 </html>
