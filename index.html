@@ -2,209 +2,243 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Architect OS ∞ v6.3</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Architect OS</title>
+
+<link rel="manifest" href="manifest.json">
 
 <style>
-:root { 
-    --accent: #3b82f6; 
-    --danger: #ef4444; 
-    --recovery: #ffaa00;
-    --night: #a855f7;
+:root { --neon-blue:#60a5fa; --neon-red:#f87171; --neon-green:#4ade80; }
+
+body {
+    margin:0; font-family:'Courier New', monospace;
+    background:#020617; color:white; overflow:hidden;
 }
 
-body { 
-    margin:0; font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-    background:#020617; color:white; overflow:hidden; 
+/* CRT effect */
+body::before {
+    content:""; position:fixed; inset:0;
+    background:linear-gradient(rgba(0,0,0,0)50%,rgba(0,0,0,0.1)50%);
+    background-size:100% 3px;
+    pointer-events:none; z-index:9999;
 }
 
-#app { padding:20px; max-width:420px; margin:auto; position:relative; z-index:10; height: 100vh; overflow-y: auto; scrollbar-width: none;}
-#app::-webkit-scrollbar { display: none; }
-
-.card { 
-    background:rgba(255, 255, 255, 0.03); padding:20px; border-radius:20px; 
-    border:1px solid rgba(255,255,255,0.05); margin-bottom:15px; backdrop-filter:blur(10px);
+/* glitch distort */
+.glitch-distort { animation: distort 0.2s infinite; }
+@keyframes distort {
+    0%{transform:skew(0deg);}
+    50%{transform:skew(3deg);}
+    100%{transform:skew(0deg);}
 }
 
-.btn { 
-    padding:16px; margin:10px 0; border-radius:14px; 
-    background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1);
-    cursor:pointer; text-transform:uppercase; font-size:12px; letter-spacing:1px; transition: 0.2s;
-}
-.btn:active { transform: scale(0.96); background:rgba(255,255,255,0.1); }
+#app { padding:40px 20px; text-align:center; }
 
-input { 
-    width:85%; background:transparent; border:none; border-bottom:1px solid #333; 
-    color:white; padding:12px; margin:15px 0; text-align:center; font-size:18px; outline:none;
+.btn {
+    padding:15px; margin:10px auto; max-width:200px;
+    background:#ffffff08; border:1px solid #ffffff22;
+    cursor:pointer; letter-spacing:2px; font-size:12px;
 }
 
-#shroud { 
-    position:fixed; top:0; left:0; width:100%; height:100%; background:#000; 
-    display:none; flex-direction:column; justify-content:center; align-items:center; z-index:100;
+input {
+    background:transparent; border:none;
+    border-bottom:1px solid #ffffff44;
+    color:var(--neon-blue); text-align:center;
+    padding:10px; margin-bottom:20px;
 }
 
-#timer { font-size:70px; font-weight:100; font-variant-numeric: tabular-nums; margin:20px 0; }
-.small { font-size:10px; opacity:0.5; letter-spacing:1px; text-transform:uppercase; }
-.level { font-size:14px; color:var(--accent); font-weight:bold; letter-spacing:2px; margin-bottom:5px; }
-canvas { position:fixed; top:0; left:0; z-index:1; }
+#shroud {
+    position:fixed; inset:0; background:black;
+    display:none; flex-direction:column;
+    justify-content:center; align-items:center;
+}
 
-/* Pulse Animations */
-@keyframes pulse { from { border-color: rgba(255,170,0,0.2); } to { border-color: rgba(255,170,0,0.6); } }
-.recovery-pulse { animation: pulse 3s infinite alternate; }
+#timer {
+    font-size:60px;
+    color:var(--neon-blue);
+    text-shadow:0 0 10px var(--neon-blue);
+}
+
+.glitch { animation: shake 0.2s infinite; color:var(--neon-red); }
+@keyframes shake {
+    0%{transform:translate(0);}
+    50%{transform:translate(2px,-2px);}
+    100%{transform:translate(0);}
+}
 </style>
 </head>
+
 <body>
 
-<canvas id="bg"></canvas>
-
 <div id="app">
-    <div style="margin-top:30px; text-align:center;">
-        <div id="level" class="level">INITIATE</div>
-        <h2 style="font-weight:200; letter-spacing:6px; margin:0;">ARCHITECT ∞</h2>
-        <div id="streak" class="small" style="margin-top:8px">STREAK: 0 DAYS</div>
-    </div>
+    <h2 id="level">ARCHITECT_OS</h2>
+    <p id="streak">STREAK: 0</p>
 
-    <div id="recoveryCard" class="card recovery-pulse" style="display:none; border-color: var(--recovery);">
-        <p class="small" style="color: var(--recovery);">⚠️ Recovery Ripple Active</p>
-        <p style="font-size:12px;">Streak reset detected. Stabilization phase engaged.</p>
-        <div class="btn" onclick="activateStabilization()" style="border-color: var(--recovery);">Acknowledge Grace</div>
-    </div>
+    <input id="foxInput" placeholder="TARGET">
 
-    <div id="launchpadSection" class="card" style="display:none;">
-        <p class="small">Morning Launchpad</p>
-        <div style="text-align:left; display:inline-block; margin:15px 0; font-size:14px;">
-            <label><input type="checkbox" class="launch-check"> Keys & Wallet</label><br>
-            <label><input type="checkbox" class="launch-check"> Water Intake Initiated</label><br>
-            <label><input type="checkbox" class="launch-check"> Phone Cleaned/Charged</label>
-        </div>
-        <div class="btn" onclick="closeLaunchpad()">System Ready</div>
-    </div>
+    <div class="btn" onclick="startHunt('red')" style="color:var(--neon-red)">[ RED ]</div>
+    <div class="btn" onclick="startHunt('blue')" style="color:var(--neon-blue)">[ BLUE ]</div>
 
-    <div class="card">
-        <input id="foxInput" placeholder="Identify Fox" autocomplete="off">
-        <div class="btn" onclick="startHunt('red')" style="border-left:4px solid var(--danger);">🔴 Intense Hunt</div>
-        <div class="btn" onclick="startHunt('blue')" style="border-left:4px solid var(--accent);">🔵 Low Energy</div>
-    </div>
-
-    <div id="nightlyReflection" class="card" style="display:none; border-color: var(--night);">
-        <p class="small" style="color: var(--night);">🟣 Nightly Descent</p>
-        <div class="btn" onclick="alert('Open Descent Tab and clear all mental RAM.')" style="border-color: var(--night);">Empty RAM for Sleep</div>
-    </div>
-
-    <div id="insight" class="small" style="text-align:center; margin:20px 0; min-height:12px;"></div>
-
-    <div style="margin-top:20px;">
-        <div class="btn" onclick="generatePilotLog()" style="opacity:0.6;">Generate Pilot's Log</div>
-        <div class="btn" onclick="sendSafetySignal()" style="opacity:0.3; font-size:9px;">Send Offline Signal</div>
-    </div>
+    <p id="insight">STATUS: IDLE</p>
 </div>
 
 <div id="shroud">
-    <div id="anchor" class="small" style="margin-bottom:20px; font-style:italic;"></div>
-    <div id="step" style="font-size:22px; font-weight:300; padding:0 40px; line-height:1.4;"></div>
+    <p id="anchor"></p>
+    <h2 id="step"></h2>
     <div id="timer">--:--</div>
-    <div style="display:flex; gap:10px;">
-        <div class="btn" style="width:140px;" onclick="nextStep()">Next</div>
-        <div class="btn" style="width:140px; border-color:var(--danger);" onclick="endSession(false)">Abort</div>
-    </div>
+    <div class="btn" onclick="nextStep()">CONTINUE</div>
+    <div class="btn" onclick="endSession(false)">ABORT</div>
 </div>
 
 <script>
-let steps=[], i=0, timer;
+let steps=[], i=0, timer, huntActive=false;
+let audioCtx;
 
-const baseProtocols={
-    red: ["Ice water to face", "Drink 8oz water", "Clear visual field"],
-    blue: ["Dim lights", "Posture reset", "One slow exhale"]
-};
-
-const anchors = {
-    red: "Logic is offline. Trust the movement.",
-    blue: "Rest is a designated task."
-};
-
-// --- PREDICTIVE ENGINE ---
-function predictAdjustments(){
-    let data=JSON.parse(localStorage.sessions||"[]");
-    let recent=data.slice(-10);
-    let failRate=recent.length ? recent.filter(s=>!s.completed).length/recent.length : 0;
-    let hour=new Date().getHours();
-    let adj=[];
-    if(failRate > 0.4) adj.push("AUTO-REDUCE ACTIVE");
-    if(hour > 21 || hour < 5) adj.push("NIGHT MODE");
-    return adj;
+/* AUDIO FIX */
+function playTone(freq,duration){
+    if(!audioCtx){
+        audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    }
+    let osc=audioCtx.createOscillator();
+    let gain=audioCtx.createGain();
+    osc.frequency.value=freq;
+    gain.gain.value=0.05;
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime+duration);
 }
 
-// --- HUNT ENGINE & UNZIPPER ---
+/* PROTOCOLS */
+const baseProtocols={
+    red:["COLD SHOCK","MOVE FAST","CLEAR SPACE"],
+    blue:["DIM LIGHT","POSTURE","BREATH"]
+};
+
+const anchors={
+    red:"EXECUTE",
+    blue:"CALIBRATE"
+};
+
+/* GLITCH SYSTEM */
+function triggerSystemGlitch(){
+    let texts=[
+        "ERROR",
+        "SIGNAL LOST",
+        "SYSTEM FAILURE",
+        "RECALIBRATING"
+    ];
+
+    document.body.classList.add('glitch-distort');
+
+    let interval=setInterval(()=>{
+        document.getElementById('insight').innerText=
+            texts[Math.floor(Math.random()*texts.length)];
+    },100);
+
+    setTimeout(()=>{
+        clearInterval(interval);
+        document.body.classList.remove('glitch-distort');
+        updateUI();
+    },1200);
+}
+
+/* START */
 function startHunt(type){
-    if (localStorage.getItem('stabilizationActive') === 'true' && type === 'red') {
-        if (!confirm("Recovery Active. Intense tasks blocked. Proceed anyway?")) return;
-    }
+    huntActive=true;
+    playTone(150,0.1);
 
-    let fox = document.getElementById('foxInput').value || "Execution";
-    let unzip = prompt("UNZIPPER: List 3 sub-steps (comma separated):", "Step 1, Step 2, Step 3");
-    let physicalSteps = unzip ? unzip.split(',').map(s=>s.trim()).filter(Boolean) : ["Begin movement"];
+    let fox=document.getElementById('foxInput').value||"EXECUTION";
 
-    let adj = predictAdjustments();
-    steps = [...adj, ...baseProtocols[type], ...physicalSteps, "2 Min Sprint: " + fox];
-    
+    let unzip=prompt("SUBTASKS","STEP1, STEP2");
+    let physical=unzip?unzip.split(',').map(s=>s.trim()):["START"];
+
+    steps=[...baseProtocols[type],...physical,"2 MIN: "+fox];
+
     i=0;
     document.getElementById('shroud').style.display='flex';
-    document.getElementById('anchor').innerText = anchors[type];
+    document.getElementById('anchor').innerText=anchors[type];
+
     runStep();
-    logStart(type, fox);
+    logStart(type,fox);
 }
 
 function runStep(){
     document.getElementById('step').innerText=steps[i];
-    if(steps[i].includes('2 Min')) startTimer(120);
-    else document.getElementById('timer').innerText = "--:--";
+
+    if(steps[i].includes("2 MIN")){
+        startTimer(120);
+    } else {
+        document.getElementById('timer').innerText="--:--";
+    }
 }
 
 function nextStep(){
     i++;
+    playTone(600,0.05);
     if(i<steps.length) runStep();
     else endSession(true);
 }
 
+/* TIMER */
 function startTimer(s){
     clearInterval(timer);
     let t=s;
+
     timer=setInterval(()=>{
-        let m=Math.floor(t/60), sec=t%60;
-        document.getElementById('timer').innerText = `${m}:${sec<10?'0':''}${sec}`;
+        let m=Math.floor(t/60),sec=t%60;
+        document.getElementById('timer').innerText=
+            `${m}:${sec<10?'0':''}${sec}`;
+
         if(t--<=0){
             clearInterval(timer);
-            if(navigator.vibrate) navigator.vibrate([300, 100, 300]);
-            document.getElementById('timer').innerText = "DONE";
+            playTone(800,0.2);
+            setTimeout(()=>endSession(true),800);
         }
     },1000);
 }
 
-// --- SESSION LOGIC ---
+/* REENTRY */
+function triggerReentry(){
+    setTimeout(()=>{
+        steps=["PAUSE","SMALL ACTION","RESTART"];
+        i=0;
+        document.getElementById('shroud').style.display='flex';
+        document.getElementById('anchor').innerText="RE-ENTRY";
+        runStep();
+    },800);
+}
+
+/* END */
 function endSession(success){
-    document.getElementById('shroud').style.display='none';
+    huntActive=false;
     clearInterval(timer);
-    if(success) {
+    document.getElementById('shroud').style.display='none';
+
+    if(success){
         updateStreak();
-        localStorage.removeItem('stabilizationActive');
+    } else {
+        triggerSystemGlitch();
+        triggerReentry();
     }
+
     logEnd(success);
     updateUI();
 }
 
-function logStart(type, fox){
+/* DATA */
+function logStart(type,fox){
     let d=JSON.parse(localStorage.sessions||"[]");
-    d.push({t:Date.now(), type, fox, completed:false});
+    d.push({t:Date.now(),type,fox,completed:false});
     localStorage.sessions=JSON.stringify(d);
 }
 
 function logEnd(success){
     let d=JSON.parse(localStorage.sessions||"[]");
-    if(d.length) d[d.length-1].completed=success;
+    if(d.length)d[d.length-1].completed=success;
     localStorage.sessions=JSON.stringify(d);
 }
 
-// --- CORE OS FUNCTIONS ---
+/* STREAK */
 function updateStreak(){
     let today=new Date().toDateString();
     if(localStorage.last!=today){
@@ -213,93 +247,59 @@ function updateStreak(){
     }
 }
 
-function getLevel(){
-    let s=+localStorage.streak||0;
-    if(s>30) return "ARCHITECT PRIME";
-    if(s>14) return "ARCHITECT II";
-    if(s>7) return "ARCHITECT I";
-    return "INITIATE";
-}
+/* AVOIDANCE */
+function detectAvoidance(){
+    let d=JSON.parse(localStorage.sessions||"[]");
+    let counts={};
 
-function updateUI(){
-    document.getElementById('streak').innerText="STREAK: "+(localStorage.streak||0)+" DAYS";
-    document.getElementById('level').innerText=getLevel();
-    
-    // Recovery Check
-    const lastDate = localStorage.getItem('last');
-    const today = new Date().toDateString();
-    if (lastDate && lastDate !== today) {
-        let diff = Math.floor((new Date() - new Date(lastDate)) / 86400000);
-        if (diff > 1) {
-            document.getElementById('recoveryCard').style.display = 'block';
-            localStorage.setItem('stabilizationActive', 'true');
+    d.forEach(s=>{
+        if(!s.completed){
+            counts[s.fox]=(counts[s.fox]||0)+1;
         }
+    });
+
+    let worst=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+    return worst?worst[0]:null;
+}
+
+/* UI */
+function updateUI(){
+    document.getElementById('streak').innerText=
+        "STREAK: "+(localStorage.streak||0);
+
+    let d=JSON.parse(localStorage.sessions||"[]");
+    let insight="STABLE";
+
+    if(d.length>3){
+        let fails=d.filter(s=>!s.completed).length;
+        insight=fails/d.length>0.4?"SIMPLIFY":"OPTIMAL";
     }
 
-    // Nightly Check
-    const hour = new Date().getHours();
-    document.getElementById('nightlyReflection').style.display = (hour >= 21 || hour < 4) ? 'block' : 'none';
+    let avoid=detectAvoidance();
+    if(avoid) insight+=" | AVOIDING: "+avoid;
 
-    // Morning Launchpad Check
-    if (localStorage.lastLaunch !== today) document.getElementById('launchpadSection').style.display = 'block';
+    document.getElementById('insight').innerText=insight;
+}
 
-    // Insight Logic
-    let d=JSON.parse(localStorage.sessions||"[]");
-    if(d.length > 3){
-        let fails = d.filter(s=>!s.completed).length;
-        document.getElementById('insight').innerText = (fails/d.length > 0.4) ? "ANALYSIS: HIGH FRICTION — SIMPLIFY" : "ANALYSIS: SYSTEM STABLE";
+/* LOCK SYSTEM */
+document.addEventListener("visibilitychange",()=>{
+    if(document.hidden && huntActive){
+        triggerSystemGlitch();
+        playTone(80,0.5);
     }
+});
+
+window.onbeforeunload=function(){
+    if(huntActive) return "Mission active";
+};
+
+/* SW */
+if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js');
 }
 
-function activateStabilization(){
-    localStorage.setItem('stabilizationActive', 'true');
-    document.getElementById('recoveryCard').style.display = 'none';
-    alert("Stabilization active: Blue hunts only for 24h.");
-}
-
-function closeLaunchpad(){
-    let checks = document.querySelectorAll('.launch-check');
-    if (Array.from(checks).every(c => c.checked)) {
-        localStorage.lastLaunch = new Date().toDateString();
-        document.getElementById('launchpadSection').style.display = 'none';
-    } else alert("Secure anchors first.");
-}
-
-function sendSafetySignal(){
-    window.location.href = `sms:?&body=${encodeURIComponent("Architect Level 0: Offline for recovery. I am safe.")}`;
-}
-
-function generatePilotLog(){
-    let d=JSON.parse(localStorage.sessions||"[]");
-    let report = `ARCHITECT OS LOG\nSTREAK: ${localStorage.streak}\nLEVEL: ${getLevel()}\n\n`;
-    d.reverse().forEach(s => {
-        report += `${new Date(s.t).toLocaleDateString()} | ${s.type} | ${s.fox} | ${s.completed ? 'SUCCESS' : 'ABORT'}\n`;
-    });
-    const blob = new Blob([report], {type:'text/plain'});
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `PilotLog_${new Date().toISOString().slice(0,10)}.txt`;
-    a.click();
-}
-
-// --- STARFIELD ANIMATION ---
-const canvas=document.getElementById('bg');
-const ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-let particles = Array.from({length:60},()=>({
-    x:Math.random()*canvas.width, y:Math.random()*canvas.height, v:Math.random()*0.3 + 0.1
-}));
-function animate(){
-    ctx.fillStyle = '#020617'; ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.fillStyle = '#ffffff22';
-    particles.forEach(p=>{
-        p.y += p.v; if(p.y > canvas.height) p.y = 0;
-        ctx.fillRect(p.x, p.y, 1, 1);
-    });
-    requestAnimationFrame(animate);
-}
-animate();
 updateUI();
 </script>
+
 </body>
 </html>
