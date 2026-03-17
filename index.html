@@ -1,9 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Architect OS ∞</title>
 
 <style>
 body{
@@ -11,326 +9,227 @@ body{
  font-family:-apple-system;
  color:white;
  text-align:center;
- transition:1s;
  background:#020617;
+ transition:0.5s;
 }
 
-/* STATE BACKGROUNDS */
-body.RED{background:radial-gradient(circle,#3b0a0a,#020617);}
-body.BLUE{background:radial-gradient(circle,#0a1b3b,#020617);}
-body.YELLOW{background:radial-gradient(circle,#3b360a,#020617);}
-body.GREEN{background:radial-gradient(circle,#0a3b1f,#020617);}
-
-/* LIVING GLOW */
-body::before{
- content:"";
- position:fixed;
- width:100%;
- height:100%;
- background:radial-gradient(circle,rgba(255,255,255,0.08),transparent);
- animation:pulse 6s infinite;
- pointer-events:none;
-}
-
-@keyframes pulse{
- 0%{opacity:0.3;}
- 50%{opacity:0.7;}
- 100%{opacity:0.3;}
-}
-
-.dashboard{max-width:420px;margin:auto;padding:20px;}
+.container{max-width:420px;margin:auto;padding:20px;}
 
 .card{
- background:rgba(30,41,59,0.4);
- border-radius:20px;
- padding:20px;
- margin-bottom:15px;
- backdrop-filter:blur(10px);
+ background:rgba(30,41,59,0.6);
+ border-radius:16px;
+ padding:15px;
+ margin:10px 0;
 }
 
 .btn{
  padding:14px;
- margin:6px 0;
- border:none;
- border-radius:12px;
- width:100%;
- background:#1e293b;
- color:white;
- font-weight:bold;
-}
-
-input,textarea{
- width:100%;
- padding:10px;
+ margin:8px 0;
  border-radius:10px;
- border:none;
- margin-bottom:10px;
+ background:#1e293b;
 }
 
-#stepText{font-size:20px;margin-top:10px;}
-#timer{font-size:28px;margin-top:10px;}
-
-.breath{
- width:120px;height:120px;margin:20px auto;
- border-radius:50%;
- background:rgba(255,255,255,0.1);
- animation:breathe 6s infinite;
+canvas{
+ width:100%;
+ height:150px;
+ background:#020617;
+ border-radius:10px;
+ margin-top:10px;
 }
 
-@keyframes breathe{
- 0%{transform:scale(.8);}
- 50%{transform:scale(1.2);}
- 100%{transform:scale(.8);}
+textarea{
+ width:100%;
+ height:80px;
+ border-radius:10px;
+ margin-top:10px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="dashboard">
+<div class="container">
 
+<!-- DASHBOARD -->
 <div class="card">
-<h2 id="mode">MODE</h2>
-<p id="status"></p>
-<p id="coach"></p>
-<p id="scripture" style="opacity:0.7;"></p>
-<div class="breath"></div>
+<h3 id="name"></h3>
+<div id="identity"></div>
+<div id="streak"></div>
+<div id="insight"></div>
 </div>
 
+<!-- STATE -->
 <div class="card">
-<h3>Log State</h3>
-<button class="btn" onclick="log('YELLOW')">Static</button>
-<button class="btn" onclick="log('RED')">Overload</button>
-<button class="btn" onclick="log('BLUE')">Shutdown</button>
-<button class="btn" onclick="log('GREEN')">Aligned</button>
+<h3 id="mode">STATE</h3>
+<div id="main">Select your state</div>
 </div>
 
+<!-- BUTTONS -->
+<div id="buttons" class="card">
+<div class="btn" onclick="enterState('RED')">Overload</div>
+<div class="btn" onclick="enterState('PURPLE')">Overthinking</div>
+<div class="btn" onclick="enterState('BLUE')">Shutdown</div>
+<div class="btn" onclick="enterState('YELLOW')">Chaos</div>
+<div class="btn" onclick="enterState('GREEN')">Clear</div>
+</div>
+
+<!-- BRAIN DUMP -->
 <div class="card">
 <h3>Brain Dump</h3>
 <textarea id="dump"></textarea>
-<button class="btn" onclick="processDump()">Process</button>
-<p id="dumpOut"></p>
+<div class="btn" onclick="processDump()">Process</div>
+<div id="result"></div>
 </div>
 
+<!-- CHECK IN -->
 <div class="card">
-<h3>Clarity Engine</h3>
-<input id="focus" placeholder="Focus task">
-<button class="btn" onclick="runClarity()">Start</button>
-
-<div id="stepBox" style="display:none;">
-<p id="stepText"></p>
-<p id="timer"></p>
-<button class="btn" onclick="nextStep()">Next</button>
-</div>
+<div class="btn" onclick="dailyCheck()">Daily Check-In</div>
 </div>
 
+<!-- GRAPH -->
 <div class="card">
-<h3>Momentum</h3>
-<p id="momentum"></p>
-<button class="btn" onclick="reset()">Reset</button>
+<h3>State Trend</h3>
+<canvas id="chart"></canvas>
 </div>
 
 </div>
 
 <script>
 
-// ---------- VOICE ----------
-function speak(text){
- let msg=new SpeechSynthesisUtterance(text);
+// ---------- SPEAK ----------
+function speak(t){
+ let msg=new SpeechSynthesisUtterance(t);
  msg.rate=0.9;
- msg.pitch=0.9;
  speechSynthesis.cancel();
  speechSynthesis.speak(msg);
 }
 
-// ---------- DATA ----------
-const W={YELLOW:8,RED:15,BLUE:16,GREEN:20};
-
-// ---------- LOG ----------
-function log(state){
-
- let d=JSON.parse(localStorage.log||"[]");
- d.push({t:Date.now(),s:state});
- localStorage.log=JSON.stringify(d);
-
- document.body.className=state;
-
- update();
- autoGuide(state);
+// ---------- STORAGE ----------
+function getLog(){
+ return JSON.parse(localStorage.log||"[]");
 }
 
-// ---------- TODAY ----------
-function today(){
- let d=JSON.parse(localStorage.log||"[]");
- let t=new Date().toDateString();
- return d.filter(e=>new Date(e.t).toDateString()===t);
+// ---------- IDENTITY ----------
+function getIdentity(){
+ return JSON.parse(localStorage.identity||"{}");
 }
 
-// ---------- MODE ----------
-function detect(){
+function setIdentity(i){
+ localStorage.identity=JSON.stringify(i);
+}
 
- let d=today().slice(-3);
+function initIdentity(){
 
- if(d.length>=3 && d.every(e=>e.s==="RED")) return "RECOVERY";
- if(d.length>=2 && d.every(e=>e.s==="BLUE")) return "RESET";
+ let id=getIdentity();
 
- let score=d.reduce((s,e)=>s+(W[e.s]||10),0);
+ if(!id.name){
+  id.name=prompt("Your name?");
+  id.values=prompt("Your values?");
+  id.streak=0;
+  id.checkins=[];
+  setIdentity(id);
+ }
 
- if(score>40) return "WORK";
- return "SPIRITUAL";
+ return id;
+}
+
+let ID=initIdentity();
+
+// ---------- DASHBOARD ----------
+function updateDashboard(){
+
+ document.getElementById("name").innerText=ID.name;
+ document.getElementById("identity").innerText="Values: "+ID.values;
+ document.getElementById("streak").innerText="Streak: "+ID.streak;
+
+ let log=getLog();
+
+ if(log.length>3){
+  document.getElementById("insight").innerText="You’ve been active recently.";
+ }
+}
+
+// ---------- STATE ----------
+function enterState(s){
+
+ let log=getLog();
+ log.push({t:Date.now(),s});
+ localStorage.log=JSON.stringify(log);
+
+ document.getElementById("mode").innerText=s;
+
+ coach(s);
+ drawChart();
 }
 
 // ---------- COACH ----------
-function getCoach(m){
- return{
-  WORK:"Execute. No hesitation.",
-  RECOVERY:"Calm your system first.",
-  RESET:"Stop everything.",
-  SPIRITUAL:"Reconnect inward."
- }[m]||"Stay steady";
-}
+function coach(s){
 
-// ---------- SCRIPTURE ----------
-function getScripture(m){
- let s={
-  WORK:["Work as unto the Lord"],
-  RECOVERY:["Be still and know"],
-  RESET:["Come to me and rest"],
-  SPIRITUAL:["Trust in the Lord"]
+ let messages={
+  RED:"Pause. You are safe.",
+  BLUE:"Go slow. One step.",
+  PURPLE:"You are overthinking.",
+  YELLOW:"Too much. Simplify.",
+  GREEN:"You are clear. Move."
  };
- let a=s[m]||["Stay steady"];
- return a[Math.floor(Math.random()*a.length)];
-}
 
-// ---------- PATTERNS ----------
-function getPatterns(){
- let d=JSON.parse(localStorage.log||"[]");
- let red=d.filter(e=>e.s==="RED").length;
- let blue=d.filter(e=>e.s==="BLUE").length;
-
- if(red>5) return "You’ve been pushing too hard.";
- if(blue>5) return "You may be burning out.";
- return "";
-}
-
-// ---------- AUTO GUIDE ----------
-function autoGuide(state){
-
- let msg="";
-
- if(state==="RED") msg="Slow down. Breathe. You are safe.";
- if(state==="BLUE") msg="Rest. Nothing required.";
- if(state==="YELLOW") msg="Too much input. Reduce it.";
- if(state==="GREEN") msg="You're clear. Move forward.";
-
- status.innerText=msg;
+ let msg=messages[s];
+ document.getElementById("main").innerText=msg;
  speak(msg);
-
- if(state==="GREEN") runClarity();
 }
 
-// ---------- UPDATE ----------
-function update(){
-
- let m=detect();
-
- mode.innerText=m;
-
- coach.innerText=getCoach(m);
- scripture.innerText=getScripture(m);
-
- let pattern=getPatterns();
- if(pattern) status.innerText+="\n\n"+pattern;
-
- momentum.innerText="🔥 "+streak()+" day streak";
-}
-
-// ---------- STREAK ----------
-function streak(){
- let u=JSON.parse(localStorage.u||"[]");
- let t=new Date().toDateString();
- if(u[u.length-1]!==t) u.push(t);
- localStorage.u=JSON.stringify(u);
- return u.length;
-}
-
-// ---------- DUMP ----------
+// ---------- BRAIN DUMP ----------
 function processDump(){
- let text=dump.value.toLowerCase();
- let lines=text.split(/[\n,.]/).filter(l=>l);
- let top=lines.sort((a,b)=>a.length-b.length)[0]||"start small";
- dumpOut.innerText="Focus → "+top;
- focus.value=top;
-}
 
-// ---------- CLARITY ----------
-let steps=[],i=0,timerInt;
+ let text=document.getElementById("dump").value;
 
-function runClarity(){
+ let result="Focus on one thing.\nIgnore the rest.";
 
- let f=focus.value||"task";
- let m=detect();
-
- if(m==="RECOVERY"){
-  steps=["Stop","Cold water","Breathe","Open "+f,"2 min"];
- }
- else if(m==="RESET"){
-  steps=["Lie down","No input","Return later"];
- }
- else if(m==="SPIRITUAL"){
-  steps=["Pray","Reflect","Open "+f,"Do small step"];
- }
- else{
-  steps=["Open "+f,"2 min focus"];
+ if(text.includes("angry")){
+  result="You are emotional. Do not react yet.";
  }
 
- i=0;
- stepBox.style.display="block";
- showStep();
+ document.getElementById("result").innerText=result;
+ speak(result);
 }
 
-// ---------- STEP ----------
-function showStep(){
- stepText.innerText=steps[i];
- if(steps[i].includes("2 min")) startTimer(120);
- else timer.innerText="";
+// ---------- CHECK IN ----------
+function dailyCheck(){
+
+ let id=getIdentity();
+
+ id.checkins.push(new Date().toDateString());
+ id.streak++;
+
+ setIdentity(id);
+
+ speak("Check in complete");
+ updateDashboard();
 }
 
-function nextStep(){
- i++;
- if(i<steps.length) showStep();
- else stepText.innerText="Complete";
+// ---------- GRAPH ----------
+function drawChart(){
+
+ let c=document.getElementById("chart");
+ let ctx=c.getContext("2d");
+
+ ctx.clearRect(0,0,c.width,c.height);
+
+ let log=getLog().slice(-7);
+
+ let map={RED:1,BLUE:2,YELLOW:3,PURPLE:4,GREEN:5};
+
+ log.forEach((e,i)=>{
+  let x=i*40+20;
+  let y=150-(map[e.s]*20);
+
+  ctx.fillRect(x,y,20,150-y);
+ });
 }
 
-// ---------- TIMER ----------
-function startTimer(s){
-
- clearInterval(timerInt);
- let t=s;
-
- timerInt=setInterval(()=>{
-  let m=Math.floor(t/60);
-  let sec=t%60;
-
-  timer.innerText=m+":"+(sec<10?"0":"")+sec;
-
-  t--;
-
-  if(t<0){
-   clearInterval(timerInt);
-   timer.innerText="Done";
-  }
- },1000);
-}
-
-// ---------- RESET ----------
-function reset(){
- localStorage.clear();
- location.reload();
-}
-
-// INIT
-update();
+// ---------- INIT ----------
+updateDashboard();
+drawChart();
 
 </script>
 
