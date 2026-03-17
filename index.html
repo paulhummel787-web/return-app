@@ -1128,7 +1128,22 @@ function startBreathing() {
   }, 4000);
 }
         } ================= ⚡ WIDGET LAYER =================
+window.quickState = function(state) {
+  console.log("STATE CLICKED:", state);
 
+  const output = document.getElementById("quick-output");
+
+  if (!output) {
+    console.error("Missing #quick-output");
+    return;
+  }
+
+  output.innerHTML = "STATE: " + state;
+
+  if (typeof activateSystemState === "function") {
+    activateSystemState(state);
+  }
+};
     </script>
 </body>
 </html>
