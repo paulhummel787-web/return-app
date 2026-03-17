@@ -77,13 +77,65 @@ function show(state) {
 
   let text = "";
 
-  if (state === "heat") text = "you are overwhelmed<br>God is near<br><br>breathe and wait";
-  if (state === "threat") text = "you are safe enough<br><br>look around";
-  if (state === "pressure") text = "you don’t need to solve everything<br><br>next 5 minutes";
-  if (state === "gravity") text = "you are tired<br><br>rest or move gently";
-  if (state === "static") text = "too much input<br><br>choose one thing";
+  if (state === "heat") {
+    text = `
+you feel overwhelmed
 
-  document.getElementById("text").innerHTML = text;
+pause
+
+breathe in slowly  
+hold  
+release  
+
+you are not in danger  
+
+God is near to you
+`;
+  }
+
+  if (state === "threat") {
+    text = `
+something feels wrong
+
+look around
+
+you are safe enough
+
+come back to the present
+`;
+  }
+
+  if (state === "pressure") {
+    text = `
+too much at once
+
+you don’t need to solve everything
+
+just the next 5 minutes
+`;
+  }
+
+  if (state === "gravity") {
+    text = `
+you feel heavy
+
+that’s okay
+
+rest or move gently
+`;
+  }
+
+  if (state === "static") {
+    text = `
+too much input
+
+slow down
+
+choose one thing
+`;
+  }
+
+  document.getElementById("text").innerText = text;
 }
 
 function next() {
