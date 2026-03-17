@@ -17,79 +17,47 @@
       transition: background 2s ease;
     }
 
-    /* THEMES */
-    .morning {
-      background: radial-gradient(circle at center, #2a2f3a, #0e1015);
-    }
+    .morning { background: radial-gradient(circle, #2a2f3a, #0e1015); }
+    .day { background: radial-gradient(circle, #1c1f26, #0b0d11); }
+    .night { background: radial-gradient(circle, #0a0c10, #000); }
 
-    .day {
-      background: radial-gradient(circle at center, #1c1f26, #0b0d11);
-    }
+    #app { max-width: 340px; width: 100%; }
 
-    .night {
-      background: radial-gradient(circle at center, #0a0c10, #000000);
-    }
-
-    #app {
-      width: 100%;
-      max-width: 320px;
-    }
-
-    h2 {
-      font-weight: 400;
-      opacity: 0.5;
-      letter-spacing: 3px;
-      margin-bottom: 50px;
-    }
+    h2 { opacity: 0.5; letter-spacing: 3px; margin-bottom: 30px; }
 
     .choice {
-      margin: 14px 0;
-      padding: 16px;
+      margin: 10px 0;
+      padding: 14px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.06);
-      font-size: 15px;
+      background: rgba(255,255,255,0.05);
     }
 
     .breath {
-      width: 180px;
-      height: 180px;
-      margin: 40px auto;
+      width: 170px;
+      height: 170px;
+      margin: 30px auto;
       border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,0.12), rgba(255,255,255,0.01));
-      animation: breathe 8s ease-in-out infinite;
-      box-shadow: 0 0 60px rgba(255,255,255,0.05);
+      background: radial-gradient(circle, rgba(255,255,255,0.12), transparent);
+      animation: breathe 8s infinite ease-in-out;
     }
 
     @keyframes breathe {
-      0% { transform: scale(0.85); opacity: 0.3; }
-      50% { transform: scale(1.25); opacity: 1; }
-      100% { transform: scale(0.85); opacity: 0.3; }
+      0% { transform: scale(0.8); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(0.8); }
     }
 
-    #text {
-      font-size: 20px;
-      line-height: 1.7;
-      min-height: 120px;
-      padding: 0 20px;
-      opacity: 0.9;
-    }
-
-    #scripture {
-      font-size: 13px;
-      opacity: 0.4;
-      margin-top: 10px;
-    }
+    #text { font-size: 18px; padding: 0 20px; line-height: 1.6; }
+    #info { font-size: 14px; opacity: 0.7; margin-top: 15px; }
 
     .small {
-      margin-top: 40px;
-      padding: 10px 20px;
+      margin-top: 20px;
+      padding: 10px;
       border-radius: 999px;
-      border: none;
       background: rgba(255,255,255,0.05);
+      border: none;
       color: white;
     }
-
   </style>
 </head>
 
@@ -99,7 +67,15 @@
 
 <!-- HOME -->
 <div id="home">
-  <h2>be still</h2>
+  <h2>return</h2>
+
+  <div class="choice" onclick="startMode('return')">return (calm)</div>
+  <div class="choice" onclick="startMode('learn')">understand</div>
+</div>
+
+<!-- STATE SELECT -->
+<div id="select" style="display:none;">
+  <h2>what are you feeling</h2>
 
   <div class="choice" onclick="start('heat')">overwhelmed</div>
   <div class="choice" onclick="start('threat')">anxious</div>
@@ -108,143 +84,125 @@
   <div class="choice" onclick="start('static')">scattered</div>
 </div>
 
-<!-- STATE -->
+<!-- RETURN MODE -->
 <div id="state" style="display:none;">
   <div class="breath"></div>
   <div id="text"></div>
-  <div id="scripture"></div>
   <button class="small" onclick="next()">continue</button>
 </div>
 
-<!-- END -->
-<div id="end" style="display:none;">
-  <p>remain here a moment</p>
-  <button class="small" onclick="home()">return</button>
+<!-- LEARN MODE -->
+<div id="learn" style="display:none;">
+  <div id="text"></div>
+  <div id="info"></div>
+  <button class="small" onclick="home()">back</button>
 </div>
 
 </div>
 
 <script>
 
-// 🌅 TIME THEMES
-function setTheme(){
-  let h = new Date().getHours();
-  let b = document.getElementById("body");
+let mode="", state="", steps=[], i=0;
 
-  if(h < 10) b.className = "morning";
-  else if(h < 18) b.className = "day";
-  else b.className = "night";
+// theme
+function setTheme(){
+ let h=new Date().getHours();
+ let b=document.getElementById("body");
+ if(h<10) b.className="morning";
+ else if(h<18) b.className="day";
+ else b.className="night";
 }
 setTheme();
 
-// 🎧 voice
-function speak(t){
- let m=new SpeechSynthesisUtterance(t);
- m.rate=0.75;
- speechSynthesis.cancel();
- speechSynthesis.speak(m);
+// mode select
+function startMode(m){
+ mode=m;
+ document.getElementById("home").style.display="none";
+ document.getElementById("select").style.display="block";
 }
 
-let state="",steps=[],i=0;
-
-// 🚀 start
+// start
 function start(s){
  state=s;
- document.getElementById("home").style.display="none";
- document.getElementById("state").style.display="block";
- build();
- i=0;
- show();
+ document.getElementById("select").style.display="none";
+
+ if(mode==="return"){
+  document.getElementById("state").style.display="block";
+  buildReturn();
+  i=0;
+  show();
+ } else {
+  document.getElementById("learn").style.display="block";
+  buildLearn();
+ }
 }
 
-// 🧠 clarity + spiritual blend
-function build(){
+// RETURN MODE
+function buildReturn(){
 
  if(state==="heat"){
-  steps=[
-   "this is your system overwhelmed",
-   "your body is trying to protect you",
-   "you are not in danger",
-   "slow your breath",
-   "God is your refuge",
-   "stay here"
-  ];
+  steps=["this is a lot","slow your breath","you are safe","God is your refuge"];
+ }
+ if(state==="threat"){
+  steps=["something feels wrong","look around","you are safe enough","God is with you"];
+ }
+ if(state==="pressure"){
+  steps=["too much at once","one step","you don’t need to carry all","God is not rushing you"];
+ }
+ if(state==="gravity"){
+  steps=["you feel heavy","that’s okay","rest","you are not alone"];
+ }
+ if(state==="static"){
+  steps=["too much noise","slow down","focus on one thing","return to calm"];
+ }
+
+}
+
+function show(){
+ document.getElementById("text").innerText=steps[i];
+}
+
+function next(){
+ i++;
+ if(i<steps.length) show();
+ else home();
+}
+
+// LEARN MODE
+function buildLearn(){
+
+ let t="", info="";
+
+ if(state==="heat"){
+  t="overwhelm";
+  info="your nervous system is overloaded. too much input, not enough processing. reduce stimulation, breathe slowly, simplify.";
  }
 
  if(state==="threat"){
-  steps=[
-   "your mind is sensing danger",
-   "this does not mean danger is real",
-   "look around slowly",
-   "orient to the present",
-   "God is your protector"
-  ];
+  t="anxiety";
+  info="your brain is scanning for danger. this does not always mean danger is real. orient to the present moment.";
  }
 
  if(state==="pressure"){
-  steps=[
-   "this is too much at once",
-   "you are not meant to carry all of this",
-   "reduce it to one step",
-   "God is not rushing you",
-   "begin small"
-  ];
+  t="pressure";
+  info="too many demands at once. your mind cannot prioritize. break things into one small step.";
  }
 
  if(state==="gravity"){
-  steps=[
-   "this is heaviness",
-   "your system is slowing down",
-   "this is not failure",
-   "rest here",
-   "God is near"
-  ];
+  t="low state";
+  info="your system is conserving energy. this is not failure. rest and reduce expectations.";
  }
 
  if(state==="static"){
-  steps=[
-   "this is overstimulation",
-   "too much input",
-   "slow everything down",
-   "focus on one thing",
-   "God brings clarity"
-  ];
+  t="mental noise";
+  info="overstimulation. your brain needs less input, not more. slow everything down.";
  }
 
-}
-
-// 📖 scripture rotation
-function getScripture(){
- const v=[
-  "Be still and know that I am God",
-  "The Lord is close to the brokenhearted",
-  "Cast your cares on Him",
-  "Come to me and I will give you rest",
-  "God is our refuge and strength"
- ];
- return v[Math.floor(Math.random()*v.length)];
-}
-
-// 👁 show
-function show(){
- let t=steps[i];
  document.getElementById("text").innerText=t;
- document.getElementById("scripture").innerText=getScripture();
- speak(t);
+ document.getElementById("info").innerText=info;
 }
 
-// ➡️ next
-function next(){
- i++;
- if(i<steps.length){
-  show();
- } else {
-  document.getElementById("state").style.display="none";
-  document.getElementById("end").style.display="block";
- }
-}
-
-// 🔄 home
+// home
 function home(){
  location.reload();
 }
