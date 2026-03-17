@@ -8,7 +8,7 @@
     body {
       margin: 0;
       font-family: -apple-system;
-      background: radial-gradient(circle at top, #14161b, #0c0d10);
+      background: radial-gradient(circle at top, #101217, #0a0c10);
       color: #e8e6e3;
       display: flex;
       justify-content: center;
@@ -17,19 +17,22 @@
       text-align: center;
     }
 
-    #app { max-width: 350px; width: 100%; }
+    #app { max-width: 360px; width: 100%; padding: 10px; }
 
-    h2 { opacity: 0.8; }
+    h2 { opacity: 0.85; letter-spacing: 1px; }
 
     .btn {
-      margin: 10px;
-      padding: 14px;
-      border-radius: 16px;
+      margin: 10px auto;
+      padding: 15px;
+      border-radius: 18px;
       border: none;
       width: 90%;
       color: white;
       font-size: 16px;
+      transition: 0.2s;
     }
+
+    .btn:active { transform: scale(0.96); }
 
     .y { background:#bfa76f }
     .r { background:#b85c5c }
@@ -39,16 +42,32 @@
 
     .breath {
       width:120px;height:120px;
-      margin:20px auto;
+      margin:25px auto;
       border-radius:50%;
-      background:rgba(255,255,255,0.08);
+      background:rgba(255,255,255,0.06);
       animation:breathe 6s infinite;
     }
 
     @keyframes breathe {
-      0%{transform:scale(.8)}
-      50%{transform:scale(1.2)}
-      100%{transform:scale(.8)}
+      0%{transform:scale(.8);opacity:.5}
+      50%{transform:scale(1.2);opacity:1}
+      100%{transform:scale(.8);opacity:.5}
+    }
+
+    #text {
+      margin:20px;
+      min-height:120px;
+      line-height:1.6;
+      font-size:18px;
+    }
+
+    .small {
+      margin-top:10px;
+      padding:10px;
+      border:none;
+      border-radius:10px;
+      background:rgba(255,255,255,0.08);
+      color:white;
     }
 
     textarea {
@@ -59,14 +78,12 @@
       padding:10px;
     }
 
-    .small {
+    #scripture {
+      font-size:14px;
+      opacity:0.7;
       margin-top:10px;
-      padding:10px;
-      border:none;
-      border-radius:10px;
-      background:rgba(255,255,255,0.1);
-      color:white;
     }
+
   </style>
 </head>
 
@@ -77,25 +94,22 @@
 <!-- HOME -->
 <div id="home">
   <h2>be still</h2>
+
   <button class="btn r" onclick="start('heat')">overwhelmed</button>
   <button class="btn o" onclick="start('threat')">anxious</button>
   <button class="btn p" onclick="start('pressure')">pressure</button>
   <button class="btn b" onclick="start('gravity')">low</button>
   <button class="btn y" onclick="start('static')">scattered</button>
-  <button class="small" onclick="insights()">view patterns</button>
-</div>
 
-<!-- SMART QUESTION -->
-<div id="question" style="display:none;">
-  <p id="qtext"></p>
-  <button class="small" onclick="answer(1)">yes</button>
-  <button class="small" onclick="answer(0)">no</button>
+  <button class="small" onclick="toggleMode()">mode: <span id="mode">guide</span></button>
+  <button class="small" onclick="insights()">view patterns</button>
 </div>
 
 <!-- STATE -->
 <div id="state" style="display:none;">
   <div class="breath"></div>
-  <p id="text"></p>
+  <div id="text"></div>
+  <div id="scripture"></div>
   <button class="small" onclick="next()">continue</button>
 </div>
 
@@ -115,7 +129,7 @@
 
 <!-- END -->
 <div id="end" style="display:none;">
-  <p>you are not alone in this<br>God is with you</p>
+  <p>you are not alone<br>God is with you here</p>
   <button class="small" onclick="home()">done</button>
 </div>
 
@@ -123,9 +137,9 @@
 
 <script>
 
-let state="",steps=[],i=0,depth=0;
+let state="", steps=[], i=0, mode="guide";
 
-// voice
+// 🎧 voice
 function speak(t){
  let m=new SpeechSynthesisUtterance(t);
  m.rate=0.85;
@@ -133,98 +147,129 @@ function speak(t){
  speechSynthesis.speak(m);
 }
 
-// start
+// 🔁 toggle mode
+function toggleMode(){
+ mode = mode==="guide" ? "clarity" : "guide";
+ document.getElementById("mode").innerText = mode;
+}
+
+// 🚀 start
 function start(s){
  state=s;
  document.getElementById("home").style.display="none";
- ask();
-}
-
-// smart question
-function ask(){
- document.getElementById("question").style.display="block";
-
- let q="does this feel intense?";
- if(state==="gravity") q="do you feel stuck or drained?";
-
- document.getElementById("qtext").innerText=q;
-}
-
-// answer
-function answer(a){
- depth=a;
- document.getElementById("question").style.display="none";
  document.getElementById("state").style.display="block";
-
  build();
  i=0;
  show();
 }
 
-// build adaptive steps
+// 🧠 build steps (deep + structured)
 function build(){
 
  if(state==="heat"){
-   steps = depth ? [
-    "this is overwhelming",
-    "pause everything",
-    "breathe slowly",
+   steps = mode==="clarity" ? [
+    "this is your nervous system in overload",
+    "your body is trying to protect you",
+    "you are not in danger",
+    "slow your breathing",
     "God is your refuge",
     "you are held even here"
    ] : [
-    "you feel stress rising",
-    "slow down",
-    "you are okay",
-    "stay present"
+    "this feels overwhelming",
+    "pause",
+    "breathe slowly",
+    "you are safe",
+    "God is with you"
    ];
  }
 
  if(state==="threat"){
-   steps=[
-    "you feel unsafe",
+   steps = mode==="clarity" ? [
+    "your brain is detecting threat",
+    "this does not mean real danger",
+    "orient to your surroundings",
     "look around slowly",
-    "your body is reacting",
     "God is your protector",
-    "return to now"
+    "you are safe enough"
+   ] : [
+    "something feels wrong",
+    "look around",
+    "you are safe",
+    "come back to now"
    ];
  }
 
  if(state==="pressure"){
-   steps=[
-    "too much responsibility",
+   steps = mode==="clarity" ? [
+    "this is mental overload",
+    "too many demands at once",
     "you are not meant to carry all of this",
-    "God carries what you cannot",
-    "do one small thing"
+    "focus on one thing",
+    "God does not rush you",
+    "faithfulness is small steps"
+   ] : [
+    "too much at once",
+    "you don’t need to solve it all",
+    "just one step",
+    "start small"
    ];
  }
 
  if(state==="gravity"){
-   steps=[
+   steps = mode==="clarity" ? [
+    "this is low energy and heaviness",
+    "your system is slowing down",
+    "this is not failure",
+    "rest is part of healing",
+    "God is near to you",
+    "you are not alone"
+   ] : [
     "you feel heavy",
-    "that is not failure",
-    "even here God is near",
-    "rest is allowed"
+    "that’s okay",
+    "rest",
+    "you are not alone"
    ];
  }
 
  if(state==="static"){
-   steps=[
-    "your mind is scattered",
+   steps = mode==="clarity" ? [
+    "this is overstimulation",
+    "too much input",
+    "your mind cannot hold it all",
     "slow everything down",
-    "you don’t need to hold it all",
+    "focus on one thing",
     "God brings clarity"
+   ] : [
+    "too much noise",
+    "slow down",
+    "focus on one thing",
+    "return to calm"
    ];
  }
+
 }
 
-// show
+// 📖 scripture system
+function getScripture(){
+ const verses = [
+  "Be still and know that I am God",
+  "Cast your anxiety on Him because He cares for you",
+  "The Lord is my shepherd, I lack nothing",
+  "Come to me and I will give you rest",
+  "God is our refuge and strength"
+ ];
+ return verses[Math.floor(Math.random()*verses.length)];
+}
+
+// 👁 show step
 function show(){
- let t=steps[i];
- document.getElementById("text").innerText=t;
+ let t = steps[i];
+ document.getElementById("text").innerText = t;
+ document.getElementById("scripture").innerText = getScripture();
  speak(t);
 }
 
-// next
+// ➡️ next
 function next(){
  i++;
  if(i<steps.length){
@@ -235,19 +280,19 @@ function next(){
  }
 }
 
-// save journal + track
+// 💾 save
 function save(){
  let txt=document.getElementById("entry").value;
  let data=JSON.parse(localStorage.getItem("data")||"[]");
 
- data.push({state:state, date:new Date().toLocaleDateString()});
+ data.push({state:state,date:new Date().toLocaleDateString()});
  localStorage.setItem("data",JSON.stringify(data));
 
  document.getElementById("journal").style.display="none";
  document.getElementById("end").style.display="block";
 }
 
-// insights
+// 📊 insights
 function insights(){
  document.getElementById("home").style.display="none";
  document.getElementById("insight").style.display="block";
@@ -261,13 +306,13 @@ function insights(){
 
  let out="";
  for(let k in count){
-  out += k + ": " + count[k] + "<br>";
+  out+=k+": "+count[k]+"<br>";
  }
 
  document.getElementById("stats").innerHTML = out || "no data yet";
 }
 
-// home
+// 🔄 home
 function home(){
  location.reload();
 }
