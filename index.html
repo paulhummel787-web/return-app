@@ -6,50 +6,15 @@
 <style>
 body{
  margin:0;
- overflow:hidden;
  font-family:-apple-system;
+ background:#050505;
  color:#e8e6e3;
  display:flex;
  justify-content:center;
  align-items:center;
  height:100vh;
- background:#050505;
 }
 
-/* 🌌 BACKGROUND */
-#glow{
- position:fixed;
- width:200%;
- height:200%;
- top:-50%;
- left:-50%;
- background: radial-gradient(circle, rgba(255,255,255,0.08), transparent 60%);
- animation: drift 25s infinite linear;
-}
-
-@keyframes drift{
- 0%{transform:translate(0,0);}
- 50%{transform:translate(30px,30px);}
- 100%{transform:translate(0,0);}
-}
-
-/* ✨ PARTICLES */
-.particle{
- position:fixed;
- width:3px;
- height:3px;
- background:white;
- border-radius:50%;
- opacity:.15;
- animation: float linear infinite;
-}
-
-@keyframes float{
- from{transform:translateY(100vh);}
- to{transform:translateY(-10vh);}
-}
-
-/* UI */
 #app{max-width:360px;width:100%;text-align:center;}
 
 .choice{
@@ -73,7 +38,7 @@ body{
  100%{transform:scale(.8);}
 }
 
-.small{
+button{
  margin-top:10px;
  padding:10px;
  border:none;
@@ -85,8 +50,6 @@ body{
 </head>
 
 <body>
-
-<div id="glow"></div>
 
 <div id="app">
 
@@ -107,8 +70,8 @@ body{
 <div class="choice" onclick="toggle('gravity',this)">low</div>
 <div class="choice" onclick="toggle('static',this)">scattered</div>
 
-<button class="small" onclick="start()">enter</button>
-<button class="small" onclick="nav('home')">back</button>
+<button onclick="start()">enter</button>
+<button onclick="nav('home')">back</button>
 </div>
 
 <!-- FLOW -->
@@ -121,30 +84,27 @@ body{
 <div id="insight" style="display:none;">
 <h2>insight</h2>
 <div id="insightText"></div>
-<button class="small" onclick="nav('home')">back</button>
+<button onclick="clearData()">clear data</button>
+<button onclick="nav('home')">back</button>
 </div>
 
 </div>
 
 <script>
 
-// 🌌 PARTICLES
-for(let i=0;i<35;i++){
- let p=document.createElement("div");
- p.className="particle";
- p.style.left=Math.random()*100+"vw";
- p.style.animationDuration=(10+Math.random()*20)+"s";
- document.body.appendChild(p);
-}
-
 // NAV
 function nav(id){
  clearInterval(flowInterval);
+
  document.querySelectorAll("#app > div").forEach(d=>d.style.display="none");
  document.getElementById(id).style.display="block";
+
+ if(id === "insight"){
+  updateInsight();
+ }
 }
 
-// 🧠 STATE SYSTEM
+// STATE
 let selected=[];
 
 function toggle(state,el){
@@ -157,12 +117,24 @@ function toggle(state,el){
  }
 }
 
-// 🧠 ENGINE (builds response)
+// SAVE DATA
+function saveSession(){
+
+ let data = JSON.parse(localStorage.getItem("returnData")) || [];
+
+ data.push({
+  states: [...selected],
+  time: new Date().toISOString()
+ });
+
+ localStorage.setItem("returnData", JSON.stringify(data));
+}
+
+// FLOW ENGINE
 function buildFlow(){
 
  let steps=[];
 
- // CLARITY FIRST
  if(selected.includes("heat"))
   steps.push("this is a lot right now");
 
@@ -178,7 +150,6 @@ function buildFlow(){
  if(selected.includes("static"))
   steps.push("your attention is scattered");
 
- // REGULATION
  steps.push("slow your breathing");
  steps.push("you are safe");
  steps.push("stay here");
@@ -186,14 +157,17 @@ function buildFlow(){
  return steps;
 }
 
-// 🌊 FLOW SYSTEM
+// FLOW
 let flowSteps=[],flowIndex=0,flowInterval;
 
 function start(){
+
  if(selected.length===0){
   alert("select at least one state");
   return;
  }
+
+ saveSession(); // tracking
 
  flowSteps=buildFlow();
  flowIndex=0;
@@ -219,31 +193,45 @@ function runFlow(){
 }
 
 function showStep(){
- let text=flowSteps[flowIndex];
- document.getElementById("text").innerText=text;
- speak(text);
+ document.getElementById("text").innerText=flowSteps[flowIndex];
 }
 
-// 🎧 VOICE
-function speak(text){
- let msg=new SpeechSynthesisUtterance(text);
- msg.rate=0.85;
- speechSynthesis.cancel();
- speechSynthesis.speak(msg);
-}
+// INSIGHT ENGINE
+function updateInsight(){
 
-// 📊 INSIGHT SYSTEM (basic version)
-function generateInsight(){
+ let data = JSON.parse(localStorage.getItem("returnData")) || [];
 
- if(selected.length===0){
-  return "start using the app to see patterns";
+ if(data.length === 0){
+  document.getElementById("insightText").innerText =
+  "no data yet — use the app to build insight";
+  return;
  }
 
- return "you are experiencing: " + selected.join(", ");
+ let counts = {
+  heat:0,
+  threat:0,
+  pressure:0,
+  gravity:0,
+  static:0
+ };
+
+ data.forEach(entry=>{
+  entry.states.forEach(s=>{
+   counts[s]++;
+  });
+ });
+
+ let top = Object.keys(counts).reduce((a,b)=> counts[a]>counts[b]?a:b);
+
+ document.getElementById("insightText").innerText =
+  "most frequent state: " + top;
 }
 
-// load insight
-document.getElementById("insightText").innerText = "use the app to build insight over time";
+// CLEAR DATA (for testing)
+function clearData(){
+ localStorage.removeItem("returnData");
+ updateInsight();
+}
 
 </script>
 
