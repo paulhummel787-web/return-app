@@ -31,7 +31,36 @@
             --border-color: rgba(255, 255, 255, 0.06);
             --glass-shadow: 0 30px 60px -12px rgba(0,0,0,0.7);
         }
+<!-- ⚡ FLOAT BUTTON -->
+<button id="panic-btn"
+class="fixed bottom-6 right-6 w-20 h-20 rounded-full bg-white text-black text-3xl shadow-2xl z-[9999]">
+⚡
+</button>
 
+<!-- ⚡ MODAL -->
+<div id="panic-modal"
+class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[9999]">
+
+  <div class="glass-panel p-10 text-center w-80">
+
+    <h2 class="mb-6 font-bold">System State</h2>
+
+    <div class="flex justify-between text-2xl mb-6">
+      <button onclick="triggerState('yellow')">🟡</button>
+      <button onclick="triggerState('red')">🔴</button>
+      <button onclick="triggerState('orange')">🟠</button>
+      <button onclick="triggerState('purple')">🟣</button>
+      <button onclick="triggerState('blue')">🔵</button>
+    </div>
+
+    <div id="action-box" class="mb-4 text-sm opacity-80"></div>
+
+    <button onclick="closePanic()" class="bg-white text-black px-4 py-2 rounded">
+      Exit
+    </button>
+
+  </div>
+</div>
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-base); 
@@ -1016,7 +1045,40 @@ if ('service worker' in navigator) {
                 logState('Baseline Secured', 'text-emerald-500');
             }
         }
-        // --- END HABIT ENGINE ---
+        // --- END HABIT ENGINE ---// ================= ⚡ WIDGET LAYER =================
+
+const widgetActions = {
+  yellow: "Reduce input. Pick ONE thing.",
+  red: "Cold water. Slow breath.",
+  orange: "5-4-3-2-1 grounding.",
+  purple: "Write everything down.",
+  blue: "Rest. No pressure."
+};
+
+// OPEN MODAL
+document.getElementById("panic-btn").onclick = () => {
+  document.getElementById("panic-modal").classList.remove("hidden");
+  document.getElementById("panic-modal").classList.add("flex");
+};
+
+// CLOSE MODAL
+function closePanic() {
+  document.getElementById("panic-modal").classList.add("hidden");
+  document.getElementById("panic-modal").classList.remove("flex");
+  document.getElementById("action-box").innerHTML = "";
+}
+
+// TRIGGER STATE (THIS IS THE KEY INTEGRATION)
+function triggerState(state) {
+
+  // Show quick instruction
+  document.getElementById("action-box").innerHTML =
+    `<p>${widgetActions[state] || "Stabilizing..."}</p>
+     <p class="font-bold mt-2">This is temporary.</p>`;
+
+  // 🔥 CALL YOUR REAL SYSTEM
+  activateSystemState(state);
+}
     </script>
 </body>
 </html>
