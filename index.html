@@ -8,33 +8,21 @@ body{
  margin:0;
  font-family:-apple-system;
  color:white;
- text-align:center;
  background:#020617;
- transition:0.5s;
+ text-align:center;
 }
 
-.container{max-width:420px;margin:auto;padding:20px;}
+.container{padding:20px;max-width:420px;margin:auto;}
 
-.card{
- background:rgba(30,41,59,0.6);
- border-radius:16px;
- padding:15px;
- margin:10px 0;
-}
+.tab{display:none;}
+
+.active{display:block;}
 
 .btn{
- padding:14px;
- margin:8px 0;
- border-radius:10px;
+ padding:16px;
+ margin:10px 0;
+ border-radius:12px;
  background:#1e293b;
-}
-
-canvas{
- width:100%;
- height:150px;
- background:#020617;
- border-radius:10px;
- margin-top:10px;
 }
 
 textarea{
@@ -43,6 +31,34 @@ textarea{
  border-radius:10px;
  margin-top:10px;
 }
+
+#nav{
+ position:fixed;
+ bottom:0;
+ width:100%;
+ display:flex;
+ justify-content:space-around;
+ background:#020617;
+ padding:10px 0;
+ border-top:1px solid #333;
+}
+
+#nav div{
+ font-size:12px;
+}
+
+.breath{
+ width:120px;height:120px;margin:20px auto;
+ border-radius:50%;
+ background:rgba(255,255,255,0.1);
+ animation:breathe 6s infinite;
+}
+
+@keyframes breathe{
+ 0%{transform:scale(.8);}
+ 50%{transform:scale(1.2);}
+ 100%{transform:scale(.8);}
+}
 </style>
 </head>
 
@@ -50,53 +66,57 @@ textarea{
 
 <div class="container">
 
-<!-- DASHBOARD -->
-<div class="card">
-<h3 id="name"></h3>
-<div id="identity"></div>
-<div id="streak"></div>
-<div id="insight"></div>
+<!-- RESET TAB -->
+<div id="reset" class="tab active">
+<h2>Reset</h2>
+<div id="resetText">Press below if you feel off</div>
+<div class="breath"></div>
+<div class="btn" onclick="startReset()">I feel off</div>
+<div id="nextBtn" class="btn" style="display:none;" onclick="nextStep()">Next</div>
 </div>
 
-<!-- STATE -->
-<div class="card">
-<h3 id="mode">STATE</h3>
-<div id="main">Select your state</div>
-</div>
-
-<!-- BUTTONS -->
-<div id="buttons" class="card">
-<div class="btn" onclick="enterState('RED')">Overload</div>
-<div class="btn" onclick="enterState('PURPLE')">Overthinking</div>
-<div class="btn" onclick="enterState('BLUE')">Shutdown</div>
-<div class="btn" onclick="enterState('YELLOW')">Chaos</div>
-<div class="btn" onclick="enterState('GREEN')">Clear</div>
-</div>
-
-<!-- BRAIN DUMP -->
-<div class="card">
-<h3>Brain Dump</h3>
-<textarea id="dump"></textarea>
+<!-- CLARITY -->
+<div id="clarity" class="tab">
+<h2>Clarity</h2>
+<textarea id="dump" placeholder="Write everything..."></textarea>
 <div class="btn" onclick="processDump()">Process</div>
 <div id="result"></div>
 </div>
 
-<!-- CHECK IN -->
-<div class="card">
-<div class="btn" onclick="dailyCheck()">Daily Check-In</div>
-</div>
-
-<!-- GRAPH -->
-<div class="card">
-<h3>State Trend</h3>
+<!-- DASHBOARD -->
+<div id="dash" class="tab">
+<h2>Dashboard</h2>
+<div id="stats"></div>
 <canvas id="chart"></canvas>
 </div>
 
+<!-- YOU -->
+<div id="you" class="tab">
+<h2>You</h2>
+<div id="identity"></div>
+<div class="btn" onclick="dailyCheck()">Daily Check-In</div>
+</div>
+
+<!-- GUIDE -->
+<div id="guide" class="tab">
+<h2>Guide</h2>
+<div id="scripture"></div>
+</div>
+
+</div>
+
+<!-- NAV -->
+<div id="nav">
+<div onclick="showTab('reset')">Reset</div>
+<div onclick="showTab('clarity')">Clarity</div>
+<div onclick="showTab('dash')">Dashboard</div>
+<div onclick="showTab('you')">You</div>
+<div onclick="showTab('guide')">Guide</div>
 </div>
 
 <script>
 
-// ---------- SPEAK ----------
+// ---------- VOICE ----------
 function speak(t){
  let msg=new SpeechSynthesisUtterance(t);
  msg.rate=0.9;
@@ -104,132 +124,138 @@ function speak(t){
  speechSynthesis.speak(msg);
 }
 
-// ---------- STORAGE ----------
-function getLog(){
- return JSON.parse(localStorage.log||"[]");
-}
+// ---------- NAV ----------
+let locked=false;
 
-// ---------- IDENTITY ----------
-function getIdentity(){
- return JSON.parse(localStorage.identity||"{}");
-}
-
-function setIdentity(i){
- localStorage.identity=JSON.stringify(i);
-}
-
-function initIdentity(){
-
- let id=getIdentity();
-
- if(!id.name){
-  id.name=prompt("Your name?");
-  id.values=prompt("Your values?");
-  id.streak=0;
-  id.checkins=[];
-  setIdentity(id);
+function showTab(tab){
+ if(locked){
+  speak("Stay here. Finish this first.");
+  return;
  }
-
- return id;
+ document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
+ document.getElementById(tab).classList.add("active");
 }
 
-let ID=initIdentity();
+// ---------- RESET SYSTEM ----------
+let steps=[],i=0;
 
-// ---------- DASHBOARD ----------
-function updateDashboard(){
+function startReset(){
 
- document.getElementById("name").innerText=ID.name;
- document.getElementById("identity").innerText="Values: "+ID.values;
- document.getElementById("streak").innerText="Streak: "+ID.streak;
+ locked=true;
 
- let log=getLog();
+ steps=[
+  "Stop. Stay here.",
+  "Breathe slowly",
+  "You are safe",
+  "Do not react",
+  "Let it pass"
+ ];
 
- if(log.length>3){
-  document.getElementById("insight").innerText="You’ve been active recently.";
+ i=0;
+ runStep();
+ document.getElementById("nextBtn").style.display="block";
+}
+
+function runStep(){
+ let s=steps[i];
+ document.getElementById("resetText").innerText=s;
+ speak(s);
+}
+
+function nextStep(){
+ i++;
+ if(i<steps.length){
+  runStep();
+ } else{
+  locked=false;
+  document.getElementById("resetText").innerText="You’re okay.";
+  speak("Good job");
  }
-}
-
-// ---------- STATE ----------
-function enterState(s){
-
- let log=getLog();
- log.push({t:Date.now(),s});
- localStorage.log=JSON.stringify(log);
-
- document.getElementById("mode").innerText=s;
-
- coach(s);
- drawChart();
-}
-
-// ---------- COACH ----------
-function coach(s){
-
- let messages={
-  RED:"Pause. You are safe.",
-  BLUE:"Go slow. One step.",
-  PURPLE:"You are overthinking.",
-  YELLOW:"Too much. Simplify.",
-  GREEN:"You are clear. Move."
- };
-
- let msg=messages[s];
- document.getElementById("main").innerText=msg;
- speak(msg);
 }
 
 // ---------- BRAIN DUMP ----------
 function processDump(){
+ let t=document.getElementById("dump").value;
+ let r="Focus on one thing.";
 
- let text=document.getElementById("dump").value;
-
- let result="Focus on one thing.\nIgnore the rest.";
-
- if(text.includes("angry")){
-  result="You are emotional. Do not react yet.";
+ if(t.includes("angry")){
+  r="You are emotional. Do not react yet.";
  }
 
- document.getElementById("result").innerText=result;
- speak(result);
+ document.getElementById("result").innerText=r;
+ speak(r);
 }
 
-// ---------- CHECK IN ----------
+// ---------- IDENTITY ----------
+function getID(){
+ return JSON.parse(localStorage.id||"{}");
+}
+
+function setID(d){
+ localStorage.id=JSON.stringify(d);
+}
+
+function init(){
+ let id=getID();
+ if(!id.name){
+  id.name=prompt("Your name?");
+  id.values=prompt("Your values?");
+  id.streak=0;
+  setID(id);
+ }
+ updateYou();
+}
+
+function updateYou(){
+ let id=getID();
+ document.getElementById("identity").innerText=
+ id.name+" | "+id.values+" | Streak: "+id.streak;
+}
+
+// ---------- CHECKIN ----------
 function dailyCheck(){
-
- let id=getIdentity();
-
- id.checkins.push(new Date().toDateString());
+ let id=getID();
  id.streak++;
-
- setIdentity(id);
-
- speak("Check in complete");
- updateDashboard();
+ setID(id);
+ updateYou();
+ speak("Check in done");
 }
 
-// ---------- GRAPH ----------
-function drawChart(){
+// ---------- DASHBOARD ----------
+function updateDash(){
+ let log=JSON.parse(localStorage.log||"[]");
+ document.getElementById("stats").innerText="Entries: "+log.length;
+ drawChart();
+}
 
+// ---------- CHART ----------
+function drawChart(){
  let c=document.getElementById("chart");
  let ctx=c.getContext("2d");
-
  ctx.clearRect(0,0,c.width,c.height);
 
- let log=getLog().slice(-7);
-
- let map={RED:1,BLUE:2,YELLOW:3,PURPLE:4,GREEN:5};
+ let log=JSON.parse(localStorage.log||"[]").slice(-7);
 
  log.forEach((e,i)=>{
-  let x=i*40+20;
-  let y=150-(map[e.s]*20);
-
-  ctx.fillRect(x,y,20,150-y);
+  ctx.fillRect(i*40,150-Math.random()*100,20,100);
  });
 }
 
+// ---------- SCRIPTURE ----------
+function setScripture(){
+ let arr=[
+  "Be still and know.",
+  "You are not alone.",
+  "This will pass."
+ ];
+ document.getElementById("scripture").innerText=
+ arr[Math.floor(Math.random()*arr.length)];
+}
+
 // ---------- INIT ----------
-updateDashboard();
-drawChart();
+init();
+updateDash();
+setScripture();
 
 </script>
 
