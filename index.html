@@ -90,7 +90,18 @@ input {
 </div>
 
 <script>
-let steps=[], i=0, timer, huntActive=false;
+/* REQUEST NOTIFICATION PERMISSION */
+if ("Notification" in window) {
+    Notification.requestPermission();
+}
+
+/* REGISTER BACKGROUND SYNC */
+if ("serviceWorker" in navigator && "SyncManager" in window) {
+    navigator.serviceWorker.ready.then(sw => {
+        return sw.sync.register("sync-sessions");
+    });
+}
+    let steps=[], i=0, timer, huntActive=false;
 let audioCtx;
 
 /* AUDIO FIX */
