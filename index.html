@@ -71,6 +71,13 @@ h2 {
 </div>
 
 <script>
+function speak(text) {
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 0.9;
+  msg.pitch = 1;
+  speechSynthesis.cancel(); // stops overlap
+  speechSynthesis.speak(msg);
+}
 let steps = [];
 let currentStep = 0;
 
@@ -131,8 +138,10 @@ function show(state) {
   showStep();
 }
 
-function showStep() {
-  document.getElementById("text").innerText = steps[currentStep];
+function showStep() function showStep() {
+  const currentText = steps[currentStep];
+  document.getElementById("text").innerText = currentText;
+  speak(currentText);
 }
 
 function next() {
