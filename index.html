@@ -2,18 +2,13 @@
 <html>
 <head>
   <title>Return</title>
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-  <link rel="manifest" href="manifest.json">
 
   <style>
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont;
-      background: radial-gradient(circle at top, #1a1d24, #0f1115);
+      font-family: -apple-system;
+      background: radial-gradient(circle at top, #14161b, #0c0d10);
       color: #e8e6e3;
       display: flex;
       justify-content: center;
@@ -22,77 +17,55 @@
       text-align: center;
     }
 
-    #app {
-      max-width: 340px;
-      width: 100%;
-      padding: 10px;
-    }
+    #app { max-width: 350px; width: 100%; }
 
-    h2 {
-      font-weight: 500;
-      margin-bottom: 25px;
-      opacity: 0.85;
-      letter-spacing: 1px;
-    }
+    h2 { opacity: 0.8; }
 
     .btn {
-      display: block;
-      margin: 12px auto;
-      padding: 16px;
-      border-radius: 20px;
-      color: white;
+      margin: 10px;
+      padding: 14px;
+      border-radius: 16px;
       border: none;
-      width: 100%;
-      font-size: 17px;
-      transition: transform 0.15s ease, opacity 0.2s;
+      width: 90%;
+      color: white;
+      font-size: 16px;
     }
 
-    .btn:active {
-      transform: scale(0.96);
-      opacity: 0.8;
-    }
-
-    .y { background: #bfa76f; }
-    .r { background: #b85c5c; }
-    .o { background: #c98a4b; }
-    .p { background: #8b6fa8; }
-    .b { background: #5f7c99; }
-
-    #text {
-      font-size: 20px;
-      line-height: 1.6;
-      margin: 20px 0;
-      min-height: 120px;
-      opacity: 0;
-      transition: opacity 0.6s ease;
-    }
-
-    .show {
-      opacity: 1 !important;
-    }
+    .y { background:#bfa76f }
+    .r { background:#b85c5c }
+    .o { background:#c98a4b }
+    .p { background:#8b6fa8 }
+    .b { background:#5f7c99 }
 
     .breath {
-      width: 130px;
-      height: 130px;
-      border-radius: 50%;
-      margin: 25px auto;
-      background: rgba(255,255,255,0.08);
-      animation: breathe 6s ease-in-out infinite;
+      width:120px;height:120px;
+      margin:20px auto;
+      border-radius:50%;
+      background:rgba(255,255,255,0.08);
+      animation:breathe 6s infinite;
     }
 
     @keyframes breathe {
-      0% { transform: scale(0.8); opacity: 0.4; }
-      50% { transform: scale(1.2); opacity: 1; }
-      100% { transform: scale(0.8); opacity: 0.4; }
+      0%{transform:scale(.8)}
+      50%{transform:scale(1.2)}
+      100%{transform:scale(.8)}
     }
 
-    button.small {
-      margin-top: 20px;
-      padding: 10px 20px;
-      border-radius: 12px;
-      border: none;
-      background: rgba(255,255,255,0.1);
-      color: white;
+    textarea {
+      width:90%;
+      height:80px;
+      border-radius:10px;
+      border:none;
+      padding:10px;
+    }
+
+    .small {
+      margin-top:10px;
+      padding:10px;
+      border:none;
+      border-radius:10px;
+      background:rgba(255,255,255,0.1);
+      color:white;
     }
   </style>
 </head>
@@ -101,136 +74,202 @@
 
 <div id="app">
 
-  <div id="home">
-    <h2>be still</h2>
-    <button class="btn y" onclick="show('static')">🟡 static</button>
-    <button class="btn r" onclick="show('heat')">🔴 heat</button>
-    <button class="btn o" onclick="show('threat')">🟠 threat</button>
-    <button class="btn p" onclick="show('pressure')">🟣 pressure</button>
-    <button class="btn b" onclick="show('gravity')">🔵 gravity</button>
-  </div>
+<!-- HOME -->
+<div id="home">
+  <h2>be still</h2>
+  <button class="btn r" onclick="start('heat')">overwhelmed</button>
+  <button class="btn o" onclick="start('threat')">anxious</button>
+  <button class="btn p" onclick="start('pressure')">pressure</button>
+  <button class="btn b" onclick="start('gravity')">low</button>
+  <button class="btn y" onclick="start('static')">scattered</button>
+  <button class="small" onclick="insights()">view patterns</button>
+</div>
 
-  <div id="state" style="display:none;">
-    <div class="breath"></div>
-    <div id="text"></div>
-    <button class="small" onclick="next()">continue</button>
-  </div>
+<!-- SMART QUESTION -->
+<div id="question" style="display:none;">
+  <p id="qtext"></p>
+  <button class="small" onclick="answer(1)">yes</button>
+  <button class="small" onclick="answer(0)">no</button>
+</div>
 
-  <div id="next" style="display:none;">
-    <p>just begin<br>one small step<br>God meets you here</p>
-    <button class="small" onclick="home()">done</button>
-  </div>
+<!-- STATE -->
+<div id="state" style="display:none;">
+  <div class="breath"></div>
+  <p id="text"></p>
+  <button class="small" onclick="next()">continue</button>
+</div>
+
+<!-- JOURNAL -->
+<div id="journal" style="display:none;">
+  <p>what is weighing on you?</p>
+  <textarea id="entry"></textarea>
+  <button class="small" onclick="save()">save</button>
+</div>
+
+<!-- INSIGHTS -->
+<div id="insight" style="display:none;">
+  <h3>your patterns</h3>
+  <div id="stats"></div>
+  <button class="small" onclick="home()">back</button>
+</div>
+
+<!-- END -->
+<div id="end" style="display:none;">
+  <p>you are not alone in this<br>God is with you</p>
+  <button class="small" onclick="home()">done</button>
+</div>
 
 </div>
 
 <script>
 
-let steps = [];
-let currentStep = 0;
+let state="",steps=[],i=0,depth=0;
 
-// 🌿 calm voice
-function speak(text) {
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.rate = 0.8;
-  msg.pitch = 0.95;
-  speechSynthesis.cancel();
-  speechSynthesis.speak(msg);
+// voice
+function speak(t){
+ let m=new SpeechSynthesisUtterance(t);
+ m.rate=0.85;
+ speechSynthesis.cancel();
+ speechSynthesis.speak(m);
 }
 
-// ✨ smooth text fade
-function updateText(text) {
-  const el = document.getElementById("text");
-  el.classList.remove("show");
-
-  setTimeout(() => {
-    el.innerText = text;
-    el.classList.add("show");
-    speak(text);
-  }, 200);
+// start
+function start(s){
+ state=s;
+ document.getElementById("home").style.display="none";
+ ask();
 }
 
-// 🌊 states (deep + structured)
-function show(state) {
-  document.getElementById("home").style.display = "none";
-  document.getElementById("state").style.display = "block";
+// smart question
+function ask(){
+ document.getElementById("question").style.display="block";
 
-  if (state === "heat") {
-    steps = [
-      "this feels intense",
-      "but you are still here",
-      "slow your breath",
-      "in... hold... out...",
-      "you are not in danger",
-      "God is near to you",
-      "stay here a moment"
-    ];
-  }
+ let q="does this feel intense?";
+ if(state==="gravity") q="do you feel stuck or drained?";
 
-  if (state === "threat") {
-    steps = [
-      "something feels wrong",
-      "look around slowly",
-      "name what you can see",
-      "feel your body",
-      "you are safe enough",
-      "come back to the present",
-      "you are held"
-    ];
-  }
-
-  if (state === "pressure") {
-    steps = [
-      "this is too much at once",
-      "you don’t need to solve everything",
-      "just this moment",
-      "just the next step",
-      "God is not rushing you",
-      "begin small"
-    ];
-  }
-
-  if (state === "gravity") {
-    steps = [
-      "you feel heavy",
-      "that’s okay",
-      "you don’t have to push",
-      "rest here",
-      "even here, God is with you",
-      "gentle movement is enough"
-    ];
-  }
-
-  if (state === "static") {
-    steps = [
-      "too much input",
-      "slow everything down",
-      "come back to one thing",
-      "you don’t need to hold it all",
-      "God is steady",
-      "focus on what matters now"
-    ];
-  }
-
-  currentStep = 0;
-  updateText(steps[currentStep]);
+ document.getElementById("qtext").innerText=q;
 }
 
-// ➡️ next step
-function next() {
-  currentStep++;
+// answer
+function answer(a){
+ depth=a;
+ document.getElementById("question").style.display="none";
+ document.getElementById("state").style.display="block";
 
-  if (currentStep < steps.length) {
-    updateText(steps[currentStep]);
-  } else {
-    document.getElementById("state").style.display = "none";
-    document.getElementById("next").style.display = "block";
-  }
+ build();
+ i=0;
+ show();
 }
 
-// 🔄 back home
-function home() {
-  document.getElementById("next").style.display = "none";
-  document.getElementById("home").style.display = "block";
+// build adaptive steps
+function build(){
+
+ if(state==="heat"){
+   steps = depth ? [
+    "this is overwhelming",
+    "pause everything",
+    "breathe slowly",
+    "God is your refuge",
+    "you are held even here"
+   ] : [
+    "you feel stress rising",
+    "slow down",
+    "you are okay",
+    "stay present"
+   ];
+ }
+
+ if(state==="threat"){
+   steps=[
+    "you feel unsafe",
+    "look around slowly",
+    "your body is reacting",
+    "God is your protector",
+    "return to now"
+   ];
+ }
+
+ if(state==="pressure"){
+   steps=[
+    "too much responsibility",
+    "you are not meant to carry all of this",
+    "God carries what you cannot",
+    "do one small thing"
+   ];
+ }
+
+ if(state==="gravity"){
+   steps=[
+    "you feel heavy",
+    "that is not failure",
+    "even here God is near",
+    "rest is allowed"
+   ];
+ }
+
+ if(state==="static"){
+   steps=[
+    "your mind is scattered",
+    "slow everything down",
+    "you don’t need to hold it all",
+    "God brings clarity"
+   ];
+ }
+}
+
+// show
+function show(){
+ let t=steps[i];
+ document.getElementById("text").innerText=t;
+ speak(t);
+}
+
+// next
+function next(){
+ i++;
+ if(i<steps.length){
+  show();
+ } else {
+  document.getElementById("state").style.display="none";
+  document.getElementById("journal").style.display="block";
+ }
+}
+
+// save journal + track
+function save(){
+ let txt=document.getElementById("entry").value;
+ let data=JSON.parse(localStorage.getItem("data")||"[]");
+
+ data.push({state:state, date:new Date().toLocaleDateString()});
+ localStorage.setItem("data",JSON.stringify(data));
+
+ document.getElementById("journal").style.display="none";
+ document.getElementById("end").style.display="block";
+}
+
+// insights
+function insights(){
+ document.getElementById("home").style.display="none";
+ document.getElementById("insight").style.display="block";
+
+ let data=JSON.parse(localStorage.getItem("data")||"[]");
+ let count={};
+
+ data.forEach(d=>{
+  count[d.state]=(count[d.state]||0)+1;
+ });
+
+ let out="";
+ for(let k in count){
+  out += k + ": " + count[k] + "<br>";
+ }
+
+ document.getElementById("stats").innerHTML = out || "no data yet";
+}
+
+// home
+function home(){
+ location.reload();
 }
 
 </script>
