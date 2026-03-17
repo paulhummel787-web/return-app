@@ -3,34 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Architect OS ∞ V14</title>
 
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#020617">
+<title>Architect OS ∞</title>
 
 <style>
 :root{
- --green:#4ade80; --red:#f87171; --yellow:#facc15;
- --blue:#60a5fa; --bg:#020617; --card:rgba(30,41,59,0.5);
+ --bg:#020617;
+ --card:rgba(30,41,59,0.5);
+ --glow:0 0 20px rgba(255,255,255,0.1);
 }
 
-body{margin:0;font-family:-apple-system;background:var(--bg);color:white;text-align:center;}
-.dashboard{padding:20px;max-width:420px;margin:auto;}
+body{
+ margin:0;
+ font-family:-apple-system;
+ background:var(--bg);
+ color:white;
+ text-align:center;
+ transition:0.4s;
+}
 
-.card{background:var(--card);border-radius:20px;padding:20px;margin-bottom:15px;}
+.dashboard{max-width:420px;margin:auto;padding:20px;}
+
+.card{
+ background:var(--card);
+ border-radius:20px;
+ padding:20px;
+ margin-bottom:15px;
+ box-shadow:var(--glow);
+}
 
 .btn{
- padding:14px;margin:6px 0;border-radius:10px;
- border:none;width:100%;font-weight:bold;
+ padding:14px;
+ margin:6px 0;
+ border:none;
+ border-radius:12px;
+ width:100%;
+ background:#1e293b;
+ color:white;
+ font-weight:bold;
 }
 
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-
-.mode{
- font-size:18px;
- letter-spacing:3px;
+input,textarea{
+ width:100%;
+ padding:10px;
+ border-radius:10px;
+ border:none;
  margin-bottom:10px;
 }
+
+#stepText{font-size:20px;margin-top:10px;}
+#timer{font-size:28px;margin-top:10px;}
+
 </style>
 </head>
 
@@ -39,27 +62,44 @@ body{margin:0;font-family:-apple-system;background:var(--bg);color:white;text-al
 <div class="dashboard">
 
 <div class="card">
-<div id="mode" class="mode">MODE</div>
+<h2 id="mode">MODE</h2>
 <p id="status"></p>
+<p id="coach"></p>
+<p id="scripture" style="opacity:0.7;"></p>
 </div>
 
 <div class="card">
 <h3>Log State</h3>
-<div class="grid">
 <button class="btn" onclick="log('YELLOW')">Static</button>
-<button class="btn" onclick="log('RED')">Heat</button>
+<button class="btn" onclick="log('RED')">Overload</button>
 <button class="btn" onclick="log('BLUE')">Shutdown</button>
-<button class="btn" onclick="log('GREEN')">Win</button>
-</div>
-</div>
-
-<div class="card">
-<h3>Mode Actions</h3>
-<div id="actions"></div>
+<button class="btn" onclick="log('GREEN')">Aligned</button>
 </div>
 
 <div class="card">
-<button class="btn" onclick="reset()">Reset System</button>
+<h3>Brain Dump</h3>
+<textarea id="dump"></textarea>
+<button class="btn" onclick="processDump()">Process</button>
+<p id="dumpOut"></p>
+</div>
+
+<div class="card">
+<h3>Clarity Engine</h3>
+<input id="focus" placeholder="Focus task">
+<button class="btn" onclick="runClarity()">Start</button>
+
+<div id="stepBox" style="display:none;">
+<p id="stepText"></p>
+<p id="timer"></p>
+<button class="btn" onclick="nextStep()">Next</button>
+</div>
+
+</div>
+
+<div class="card">
+<h3>Momentum</h3>
+<p id="momentum"></p>
+<button class="btn" onclick="reset()">Reset</button>
 </div>
 
 </div>
@@ -67,107 +107,173 @@ body{margin:0;font-family:-apple-system;background:var(--bg);color:white;text-al
 <script>
 
 // ---------- DATA ----------
-const WEIGHTS={YELLOW:8,RED:15,BLUE:16,GREEN:18};
+const W={YELLOW:8,RED:15,BLUE:16,GREEN:20};
 
 // ---------- LOG ----------
-function log(state){
+function log(s){
  let d=JSON.parse(localStorage.log||"[]");
- d.push({t:Date.now(),state});
+ d.push({t:Date.now(),s});
  localStorage.log=JSON.stringify(d);
  update();
 }
 
-// ---------- GET TODAY ----------
-function getToday(){
+// ---------- TODAY ----------
+function today(){
  let d=JSON.parse(localStorage.log||"[]");
- let today=new Date().toDateString();
- return d.filter(e=>new Date(e.t).toDateString()===today);
+ let t=new Date().toDateString();
+ return d.filter(e=>new Date(e.t).toDateString()===t);
 }
 
-// ---------- MODE DETECTION ----------
-function detectMode(){
+// ---------- MODE ----------
+function detect(){
 
- let d=getToday().slice(-3);
+ let d=today().slice(-3);
 
- if(d.length>=3 && d.every(e=>e.state==="RED"))
-  return "RECOVERY";
+ if(d.length>=3 && d.every(e=>e.s==="RED")) return "RECOVERY";
+ if(d.length>=2 && d.every(e=>e.s==="BLUE")) return "RESET";
 
- if(d.length>=2 && d.every(e=>e.state==="BLUE"))
-  return "RESET";
-
- let score=d.reduce((s,e)=>s+(WEIGHTS[e.state]||10),0);
+ let score=d.reduce((s,e)=>s+(W[e.s]||10),0);
 
  if(score>40) return "WORK";
-
  return "SPIRITUAL";
 }
 
-// ---------- ACTIONS ----------
-function renderActions(mode){
+// ---------- COACH ----------
+function coach(m){
+ return{
+  WORK:"Execute. No hesitation.",
+  RECOVERY:"Calm your system first.",
+  RESET:"Stop everything.",
+  SPIRITUAL:"Reconnect inward."
+ }[m]||"Stay steady";
+}
 
- let box=document.getElementById("actions");
- box.innerHTML="";
-
- let actions=[];
-
- if(mode==="WORK"){
-  actions=["Start Deep Work","Finish Task","Avoid Distraction"];
- }
-
- if(mode==="RECOVERY"){
-  actions=["Cold Water","Breathing","Sit Down"];
- }
-
- if(mode==="SPIRITUAL"){
-  actions=["Pray","Reflect","Read Scripture"];
- }
-
- if(mode==="RESET"){
-  actions=["Lie Down","No Input","Full Stop"];
- }
-
- actions.forEach(a=>{
-  let b=document.createElement("button");
-  b.className="btn";
-  b.innerText=a;
-  box.appendChild(b);
- });
+// ---------- SCRIPTURE ----------
+function scripture(m){
+ let s={
+  WORK:["Work as unto the Lord"],
+  RECOVERY:["Be still and know"],
+  RESET:["Come to me and rest"],
+  SPIRITUAL:["Trust in the Lord"]
+ };
+ let a=s[m]||["Stay steady"];
+ return a[Math.floor(Math.random()*a.length)];
 }
 
 // ---------- UPDATE ----------
 function update(){
 
- let mode=detectMode();
+ let m=detect();
 
- document.getElementById("mode").innerText=mode;
+ mode.innerText=m;
+ status.innerText={
+  WORK:"Execution",
+  RECOVERY:"Regulate",
+  RESET:"Shutdown",
+  SPIRITUAL:"Center"
+ }[m];
 
- let status="";
+ coach.innerText=coach(m);
+ scripture.innerText=scripture(m);
 
- if(mode==="WORK") status="Execution mode active";
- if(mode==="RECOVERY") status="Regulation required";
- if(mode==="SPIRITUAL") status="Center yourself";
- if(mode==="RESET") status="System override";
+ momentum.innerText="🔥 "+streak()+" day streak";
+}
 
- document.getElementById("status").innerText=status;
+// ---------- STREAK ----------
+function streak(){
+ let u=JSON.parse(localStorage.u||"[]");
+ let t=new Date().toDateString();
+ if(u[u.length-1]!==t) u.push(t);
+ localStorage.u=JSON.stringify(u);
+ return u.length;
+}
 
- renderActions(mode);
+// ---------- DUMP ----------
+function processDump(){
+ let text=dump.value.toLowerCase();
+ let lines=text.split(/[\n,.]/).filter(l=>l);
+
+ let sorted=lines.sort((a,b)=>a.length-b.length);
+
+ let top=sorted[0]||"start small";
+
+ dumpOut.innerText="Focus → "+top;
+ focus.value=top;
+}
+
+// ---------- CLARITY ----------
+let steps=[],i=0,timerInt;
+
+function runClarity(){
+
+ let f=focus.value||"task";
+ let m=detect();
+
+ if(m==="RECOVERY"){
+  steps=["Stop","Cold water","Breathe","Open "+f,"2 min"];
+ }
+ else if(m==="RESET"){
+  steps=["Lie down","No input","Return later"];
+ }
+ else if(m==="SPIRITUAL"){
+  steps=["Pray","Reflect","Open "+f,"Do small step"];
+ }
+ else{
+  steps=["Open "+f,"2 min focus"];
+ }
+
+ i=0;
+ stepBox.style.display="block";
+ showStep();
+}
+
+// ---------- STEP ----------
+function showStep(){
+ stepText.innerText=steps[i];
+
+ if(steps[i].includes("2 min")) startTimer(120);
+ else timer.innerText="";
+}
+
+function nextStep(){
+ i++;
+ if(i<steps.length) showStep();
+ else stepText.innerText="Complete";
+}
+
+// ---------- TIMER ----------
+function startTimer(s){
+
+ clearInterval(timerInt);
+
+ let t=s;
+
+ timerInt=setInterval(()=>{
+  let m=Math.floor(t/60);
+  let sec=t%60;
+
+  timer.innerText=m+":"+(sec<10?"0":"")+sec;
+
+  t--;
+
+  if(t<0){
+   clearInterval(timerInt);
+   timer.innerText="Done";
+  }
+
+ },1000);
 }
 
 // ---------- RESET ----------
 function reset(){
- if(confirm("Reset all data?")){
-  localStorage.clear();
-  location.reload();
- }
+ localStorage.clear();
+ location.reload();
 }
 
-// ---------- PWA ----------
-if("serviceWorker" in navigator){
- navigator.serviceWorker.register("sw.js");
-}
-
+// INIT
 update();
 
 </script>
+
 </body>
 </html>
