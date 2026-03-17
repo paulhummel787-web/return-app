@@ -71,11 +71,16 @@ h2 {
 </div>
 
 <script>
-function speak(text) {
+function speak(text) function speak(text, callback) {
   const msg = new SpeechSynthesisUtterance(text);
-  msg.rate = 0.9;
-  msg.pitch = 1;
-  speechSynthesis.cancel(); // stops overlap
+  msg.rate = 0.75; // slower = calmer
+  msg.pitch = 0.9;
+
+  msg.onend = function() {
+    setTimeout(callback, 1200); // pause before next step
+  };
+
+  speechSynthesis.cancel();
   speechSynthesis.speak(msg);
 }
 let steps = [];
@@ -138,10 +143,19 @@ function show(state) {
   showStep();
 }
 
-function showStep() function showStep() {
-  const currentText = steps[currentStep];
-  document.getElementById("text").innerText = currentText;
-  speak(currentText);
+function showStep() function showStep()function showStep() {
+  if (currentStep < steps.length) {
+    const currentText = steps[currentStep];
+    document.getElementById("text").innerText = currentText;
+
+    speak(currentText, () => {
+      currentStep++;
+      showStep();
+    });
+  } else {
+    document.getElementById("state").style.display = "none";
+    document.getElementById("next").style.display = "block";
+  }
 }
 
 function next() {
