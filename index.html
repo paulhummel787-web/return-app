@@ -2,54 +2,74 @@
 <html>
 <head>
   <title>Return</title>
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <link rel="manifest" href="manifest.json">
+
   <style>
-  body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont;
-  background: radial-gradient(circle at top, #1a1d24, #0f1115);
-  color: #e8e6e3;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  text-align: center;
-}
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont;
+      background: radial-gradient(circle at top, #1a1d24, #0f1115);
+      color: #e8e6e3;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
 
-#app {
-  max-width: 320px;
-  width: 100%;
-}
+    #app {
+      max-width: 320px;
+      width: 100%;
+    }
 
-h2 {
-  font-weight: 500;
-  margin-bottom: 20px;
-  opacity: 0.8;
-}
+    h2 {
+      font-weight: 500;
+      margin-bottom: 20px;
+      opacity: 0.8;
+    }
 
-.btn {
-  display: block;
-  margin: 12px auto;
-  padding: 16px;
-  border-radius: 20px;
-  color: white;
-  border: none;
-  width: 100%;
-  font-size: 17px;
-  transition: transform 0.15s ease, opacity 0.2s;
-}
+    .btn {
+      display: block;
+      margin: 12px auto;
+      padding: 16px;
+      border-radius: 20px;
+      color: white;
+      border: none;
+      width: 100%;
+      font-size: 17px;
+    }
 
-.btn:active {
-  transform: scale(0.96);
-  opacity: 0.8;
-}
+    .y { background: #bfa76f; }
+    .r { background: #b85c5c; }
+    .o { background: #c98a4b; }
+    .p { background: #8b6fa8; }
+    .b { background: #5f7c99; }
+
+    #text {
+      font-size: 20px;
+      line-height: 1.6;
+      margin: 20px 0;
+      min-height: 100px;
+    }
+
+    button.small {
+      margin-top: 20px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      border: none;
+    }
   </style>
 </head>
+
 <body>
+
 <div id="app">
+
   <div id="home">
     <h2>be still</h2>
     <button class="btn y" onclick="show('static')">🟡 static</button>
@@ -60,32 +80,32 @@ h2 {
   </div>
 
   <div id="state" style="display:none;">
-    <p id="text"></p>
-    <button onclick="next()">continue</button>
+    <div id="text"></div>
+    <button class="small" onclick="next()">continue</button>
   </div>
 
   <div id="next" style="display:none;">
     <p>just begin<br>one small step<br>God meets you here</p>
-    <button onclick="home()">done</button>
+    <button class="small" onclick="home()">done</button>
   </div>
+
 </div>
 
 <script>
-function speak(text) function speak(text, callback) {
-  const msg = new SpeechSynthesisUtterance(text);
-  msg.rate = 0.75; // slower = calmer
-  msg.pitch = 0.9;
 
-  msg.onend = function() {
-    setTimeout(callback, 1200); // pause before next step
-  };
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(msg);
-}
 let steps = [];
 let currentStep = 0;
 
+// ✅ Voice (safe for iPhone)
+function speak(text) {
+  const msg = new SpeechSynthesisUtterance(text);
+  msg.rate = 0.85;
+  msg.pitch = 1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(msg);
+}
+
+// ✅ Show state
 function show(state) {
   document.getElementById("home").style.display = "none";
   document.getElementById("state").style.display = "block";
@@ -143,21 +163,14 @@ function show(state) {
   showStep();
 }
 
-function showStep() function showStep()function showStep() {
-  if (currentStep < steps.length) {
-    const currentText = steps[currentStep];
-    document.getElementById("text").innerText = currentText;
-
-    speak(currentText, () => {
-      currentStep++;
-      showStep();
-    });
-  } else {
-    document.getElementById("state").style.display = "none";
-    document.getElementById("next").style.display = "block";
-  }
+// ✅ Show each step (tap to continue = reliable)
+function showStep() {
+  const currentText = steps[currentStep];
+  document.getElementById("text").innerText = currentText;
+  speak(currentText);
 }
 
+// ✅ Next step
 function next() {
   currentStep++;
 
@@ -169,10 +182,12 @@ function next() {
   }
 }
 
+// ✅ Back home
 function home() {
   document.getElementById("next").style.display = "none";
   document.getElementById("home").style.display = "block";
 }
+
 </script>
 
 </body>
