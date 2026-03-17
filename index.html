@@ -957,7 +957,66 @@ if ('service worker' in navigator) {
             .then(reg => console.log('Offline System: Active'))
             .catch(err => console.log('Offline System: Failed', err));
     });
-}
+} // --- HABIT INTEGRITY ENGINE (ADD THIS SECTION) ---
+        const dailyHabits = [
+            { id: 'h1', label: 'Biological Fuel', desc: 'Protein-heavy morning intake' },
+            { id: 'h2', label: 'Light Exposure', desc: '10m Natural sunlight / Verilux' },
+            { id: 'h3', label: 'Hydration v1', desc: 'First 32oz water consumed' },
+            { id: 'h4', label: 'Dopamine Fast', desc: 'No scrolling for first 60m' },
+            { id: 'h5', label: 'The Reading', desc: 'Identity Anchor meditation' }
+        ];
+
+        function renderHabits() {
+            const container = document.getElementById('habit-audit-list');
+            if (!container) return; // Safety check
+            
+            const saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            
+            let completed = 0;
+            container.innerHTML = dailyHabits.map(h => {
+                const isChecked = saved[h.id] ? 'checked' : '';
+                if(saved[h.id]) completed++;
+                return `
+                    <label class="flex items-center gap-6 p-6 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-transparent hover:border-current/10 transition-all cursor-pointer group mb-4">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="toggleHabit('${h.id}')" ${isChecked} 
+                                class="appearance-none w-6 h-6 rounded-full border-2 border-current/20 checked:bg-current transition-all">
+                        </div>
+                        <div class="flex-1">
+                            <span class="block text-[11px] font-black uppercase tracking-widest">${h.label}</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">${h.desc}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            // Add Integrity Progress Bar
+            const percent = (completed / dailyHabits.length) * 100;
+            const progressHTML = `
+                <div class="mt-8 pt-8 border-t border-current/5">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[9px] font-black uppercase opacity-30 tracking-widest">Integrity Score</span>
+                        <span class="text-[10px] font-mono font-bold">${Math.round(percent)}%</span>
+                    </div>
+                    <div class="w-full h-1 bg-current/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-current transition-all duration-1000" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', progressHTML);
+        }
+
+        function toggleHabit(id) {
+            let saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            saved[id] = !saved[id];
+            localStorage.setItem('arch_habits', JSON.stringify(saved));
+            renderHabits();
+            
+            if(Object.values(saved).filter(Boolean).length === dailyHabits.length) {
+                logState('Baseline Secured', 'text-emerald-500');
+            }
+        }
+        // --- END HABIT ENGINE ---
     </script>
 </body>
 </html>
