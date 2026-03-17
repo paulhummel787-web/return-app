@@ -1,230 +1,318 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>The Architect's Sanctuary</title>
-<style>
-  :root {
-    --bg-dark: #111;
-    --text-main: #e8e6e3;
-    --glass: rgba(255, 255, 255, 0.05);
-    --glass-hover: rgba(255, 255, 255, 0.15);
-    --glass-border: rgba(255, 255, 255, 0.1);
-  }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Architect's Sanctuary</title>
+    <style>
+        :root { 
+            --bg-dark: #0a0a0a; 
+            --text: #e8e6e3; 
+            --glass: rgba(255, 255, 255, 0.06); 
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
 
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    color: var(--text-main);
-    text-align: center;
-    transition: background 0.8s ease;
-    height: 100vh;
-    overflow: hidden;
-    background: #0f1624; /* Default Blue */
-  }
+        body { 
+            margin: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            color: var(--text); 
+            text-align: center; 
+            transition: background 0.8s, opacity 0.5s; 
+            height: 100vh; 
+            overflow: hidden; 
+            background: #0f1624; /* Default Blue/Gravity State */
+        }
+        
+        /* Chromatic Regulation States */
+        body.yellow { background: linear-gradient(180deg, #3a3a1a, #1f1f0f); } /* Static */
+        body.red { background: linear-gradient(180deg, #3a1a1a, #1a0f0f); }    /* Heat */
+        body.orange { background: linear-gradient(180deg, #3a261a, #1f140f); } /* Threat */
+        body.purple { background: linear-gradient(180deg, #2a1a3a, #140f1f); } /* Pressure */
+        body.blue { background: linear-gradient(180deg, #1a253a, #0f1624); }   /* Gravity */
+        body.level-zero { background: #000 !important; }
 
-  /* Chromatic Regulation Backgrounds */
-  body.yellow { background: linear-gradient(135deg, #3a3a1a, #1f1f0f); } /* Static */
-  body.red { background: linear-gradient(135deg, #3a1a1a, #1a0f0f); }    /* Heat */
-  body.orange { background: linear-gradient(135deg, #3a261a, #1f140f); } /* Threat */
-  body.purple { background: linear-gradient(135deg, #2a1a3a, #140f1f); } /* Pressure */
-  body.blue { background: linear-gradient(135deg, #1a253a, #0f1624); }   /* Gravity */
+        #app { 
+            max-width: 420px; 
+            margin: auto; 
+            padding: 20px; 
+            height: 85vh; 
+            overflow-y: auto; 
+            transition: opacity 0.5s;
+            scrollbar-width: none;
+        }
+        #app::-webkit-scrollbar { display: none; }
 
-  #app { 
-    max-width: 420px; 
-    margin: auto; 
-    padding: 40px 20px; 
-    height: calc(100vh - 80px);
-    overflow-y: auto;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  #app::-webkit-scrollbar { display: none; }
+        /* Focus Shroud Mode */
+        .shrouded #app { opacity: 0.05; pointer-events: none; }
+        .shrouded #shroudOverlay { display: flex !important; }
 
-  h2 { font-weight: 200; letter-spacing: 3px; margin-bottom: 30px; text-transform: lowercase; }
-  h3 { font-weight: 300; letter-spacing: 1px; margin-top: 20px; }
-  p { font-weight: 200; line-height: 1.6; opacity: 0.8; }
+        h2 { font-weight: 200; letter-spacing: 4px; text-transform: lowercase; margin-top: 30px; margin-bottom: 30px; }
+        
+        .btn { 
+            margin: 10px 0; 
+            padding: 18px; 
+            border-radius: 20px; 
+            background: var(--glass); 
+            border: 1px solid var(--glass-border); 
+            cursor: pointer; 
+            backdrop-filter: blur(10px); 
+            transition: 0.2s; 
+            font-size: 14px; 
+            letter-spacing: 1px; 
+            font-weight: 300;
+        }
+        .btn:active { transform: scale(0.97); background: rgba(255, 255, 255, 0.15); }
+        
+        input, textarea { 
+            width: 90%; 
+            padding: 14px; 
+            margin: 8px 0; 
+            border-radius: 12px; 
+            border: 1px solid var(--glass-border); 
+            background: rgba(0, 0, 0, 0.4); 
+            color: white; 
+            text-align: center; 
+            font-family: inherit; 
+            font-size: 16px;
+            outline: none;
+        }
+        
+        /* Shroud UI */
+        #shroudOverlay { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            display: none; z-index: 100; 
+            flex-direction: column; 
+            justify-content: center; 
+            align-items: center; 
+            background: inherit; 
+        }
+        #timer { font-size: 64px; font-weight: 100; margin: 20px 0; letter-spacing: -2px; }
+        
+        /* Navigation */
+        .tabbar { 
+            position: fixed; bottom: 0; width: 100%; max-width: 420px; 
+            left: 50%; transform: translateX(-50%); 
+            display: flex; justify-content: space-around; 
+            background: rgba(0, 0, 0, 0.95); 
+            padding: 20px 0 35px 0; 
+            border-top: 1px solid var(--glass-border); 
+        }
+        .tab { opacity: 0.4; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: 0.3s; }
+        .tab.active { opacity: 1; font-weight: bold; }
 
-  .btn {
-    margin: 12px 0;
-    padding: 18px;
-    border-radius: 15px;
-    background: var(--glass);
-    border: 1px solid var(--glass-border);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-weight: 300;
-    letter-spacing: 1px;
-    backdrop-filter: blur(5px);
-  }
-  .btn:active { background: var(--glass-hover); transform: scale(0.98); }
+        /* Launchpad */
+        .launchpad-item { 
+            display: flex; align-items: center; justify-content: space-between; 
+            background: var(--glass); padding: 12px 20px; 
+            border-radius: 15px; margin-bottom: 8px; font-size: 14px; 
+        }
+        input[type="checkbox"] { width: auto; margin-right: 10px; accent-color: #fff; transform: scale(1.2); }
 
-  .btn-urgent {
-    border-color: rgba(255, 100, 100, 0.3);
-    color: #ffcccc;
-  }
-
-  input, textarea {
-    width: 90%;
-    padding: 16px;
-    margin: 10px 0;
-    border-radius: 12px;
-    border: 1px solid var(--glass-border);
-    background: rgba(0, 0, 0, 0.2);
-    color: white;
-    font-family: inherit;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 200;
-    outline: none;
-  }
-  input:focus, textarea:focus { background: rgba(0,0,0,0.4); border-color: rgba(255,255,255,0.3); }
-
-  #timer { font-size: 42px; margin: 20px 0; font-variant-numeric: tabular-nums; font-weight: 200; }
-
-  .tabbar {
-    position: fixed;
-    bottom: 0;
-    width: 100%;
-    max-width: 420px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    justify-content: space-around;
-    background: rgba(17, 17, 17, 0.85);
-    padding: 15px 0 25px 0;
-    backdrop-filter: blur(15px);
-    border-top: 1px solid var(--glass-border);
-  }
-
-  .tab { 
-    opacity: 0.5; 
-    font-size: 10px; 
-    text-transform: uppercase; 
-    letter-spacing: 2px; 
-    cursor: pointer;
-    padding: 10px;
-    transition: 0.2s;
-  }
-  .tab.active { opacity: 1; font-weight: bold; }
-
-  /* Color Picker */
-  .color-picker { display: flex; justify-content: center; gap: 12px; margin: 25px 0; }
-  .color-dot {
-    width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    cursor: pointer; font-size: 20px; border: 2px solid transparent; transition: 0.2s;
-    background: rgba(0,0,0,0.2);
-  }
-  .color-dot.selected { border-color: white; transform: scale(1.1); }
-
-  /* Script Box */
-  .script-box {
-    background: rgba(0,0,0,0.4);
-    border-left: 3px solid white;
-    padding: 15px;
-    margin-top: 15px;
-    text-align: left;
-    display: none;
-    border-radius: 0 10px 10px 0;
-  }
-  
-  /* Rabbit List */
-  #rabbitList { text-align: left; margin-top: 20px; padding: 0 10px; }
-  .rabbit-item {
-    background: var(--glass); padding: 12px; margin-bottom: 8px; border-radius: 8px;
-    display: flex; justify-content: space-between; font-weight: 200; font-size: 14px;
-  }
-</style>
+        .ripple-badge { 
+            font-size: 10px; color: #ffaa00; margin-bottom: 15px; 
+            letter-spacing: 2px; text-transform: uppercase; display: none; 
+        }
+    </style>
 </head>
-
 <body class="blue">
 
-<div id="app">
-
-  <div id="home" class="view">
-    <h2>the architect</h2>
-    <div id="homeInsight" style="margin-bottom:30px; font-weight:200; font-style:italic;"></div>
-    
-    <div class="btn" onclick="nav('clarity')">hunt the fox</div>
-    <div class="btn" onclick="nav('dump')">the descent</div>
-    
-    <div style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-      <p style="font-size: 12px; letter-spacing: 2px;">EMERGENCY PROTOCOL</p>
-      <div class="btn btn-urgent" onclick="showLevelZero()">level 0 reset</div>
-    </div>
-
-    <div id="levelZeroData" style="display:none; margin-top: 20px; text-align: left; padding: 20px; background: rgba(0,0,0,0.3); border-radius: 12px;">
-      <p><strong>1. DARKNESS:</strong> Remove all visual input.</p>
-      <p><strong>2. COMPRESSION:</strong> Weighted blanket / deep pressure.</p>
-      <p><strong>3. HYDRATION:</strong> Drink 8oz water immediately.</p>
-      <p><strong>4. REBOOT:</strong> Sleep. No guilt. The system is saving.</p>
-      <div class="btn" style="text-align:center; margin-top:15px;" onclick="document.getElementById('levelZeroData').style.display='none'">hide</div>
-    </div>
-  </div>
-
-  <div id="clarity" class="view" style="display:none;">
-    <h2>the hunt</h2>
-    <input id="fox" placeholder="identify the great fox...">
-    
-    <p style="font-size: 12px; letter-spacing: 2px; margin-top:25px;">DASHBOARD STATUS</p>
-    <div class="color-picker">
-      <div class="color-dot" id="dot-yellow" onclick="pickState('yellow')">🟡</div>
-      <div class="color-dot" id="dot-red" onclick="pickState('red')">🔴</div>
-      <div class="color-dot" id="dot-orange" onclick="pickState('orange')">🟠</div>
-      <div class="color-dot" id="dot-purple" onclick="pickState('purple')">🟣</div>
-      <div class="color-dot selected" id="dot-blue" onclick="pickState('blue')">🔵</div>
-    </div>
-
-    <div class="btn" style="background:rgba(255,255,255,0.15)" onclick="runDay()">activate protocol</div>
-
-    <div id="stepMode" style="display:none; margin-top:30px; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
-      <p id="coachText" style="font-style:italic;"></p>
-      <h3 id="stepText"></h3>
-      <div id="timer">---</div>
-      <div class="btn" onclick="nextStep()" id="nextBtn">confirm step</div>
-    </div>
-  </div>
-
-  <div id="dump" class="view" style="display:none;">
-    <h2>the descent</h2>
-    
-    <p style="font-size: 12px; letter-spacing: 2px;">EMPTY THE RAM</p>
-    <textarea id="dumpInput" rows="4" placeholder="brain dump open loops here..."></textarea>
-    <div class="btn" onclick="processDump()">clear loops</div>
-    <div id="dumpOutput" style="margin-top:10px; font-weight:200; font-size:14px; opacity:0.8; height:20px;"></div>
-
-    <div style="margin-top: 40px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-      <p style="font-size: 12px; letter-spacing: 2px;">THE 24-HOUR BIN</p>
-      <input id="rabbitInput" placeholder="pen a rabbit (impulse buy/idea)...">
-      <div class="btn" style="padding: 12px;" onclick="addRabbit()">lock it away</div>
-      <div id="rabbitList"></div>
-    </div>
-  </div>
-
-  <div id="social" class="view" style="display:none;">
-    <h2>safe words</h2>
-    <p style="font-size: 14px; margin-bottom: 30px;">Show this screen to your support crew.</p>
-
-    <div class="btn" onclick="toggleScript('script-offline')">OFFLINE</div>
-    <div id="script-offline" class="script-box">
-      <strong>Pilot Offline.</strong><br>
-      My prefrontal cortex is hitting a glitch. If you keep talking or asking questions, the Alarm will scream louder. I need 20 minutes of complete silence. It is not your fault. I am safe.
-    </div>
-
-    <div class="btn" onclick="toggleScript('script-static')">STATIC</div>
-    <div id="script-static" class="script-box">
-      <strong>Sensory Overload.</strong><br>
-      My bandwidth is exceeded. I need the lights lowered or the music turned off immediately. Please do not ask me to explain why right now.
-    </div>
-
-    <div class="btn" onclick="toggleScript('script-rejection')">REJECTION</div>
-    <div id="script-rejection" class="script-box">
-      <strong>RSD Triggered.</strong><br>
-      I am feeling the physical sting of rejection right now. My brain is telling me you are angry. I need you to explicitly tell me that we are "okay."
-    </div>
-  </div>
-
+<div id="shroudOverlay">
+    <p id="shroudAnchor" style="font-style: italic; opacity: 0.6; font-size: 14px; margin-bottom: 40px; padding: 0 40px;"></p>
+    <h3 id="shroudStep" style="font-weight: 300; margin-bottom: 20px; padding: 0 20px;"></h3>
+    <div id="timer">---</div>
+    <div class="btn" style="width: 200px;" onclick="advanceStep()">Confirm Step</div>
 </div>
 
-<div class="tabbar">
-  <div class="tab active" id="tab-home"
+<div id="app">
+    <div id="home" class="view">
+        <div id="rippleBadge" class="ripple-badge">⚠️ Recovery Ripple Active</div>
+        <h2>the pilot</h2>
+        <div id="streak" style="font-size: 11px; opacity: 0.5; margin-bottom: 30px;">ARCHITECT STREAK: 0 DAYS</div>
+        
+        <div class="btn" onclick="nav('clarity')">Hunt the Fox</div>
+        <div class="btn" onclick="nav('launchpad')">Launchpad Check</div>
+        <div class="btn" onclick="nav('dump')">The Descent</div>
+        
+        <div style="margin-top: 50px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 20px;">
+            <p style="font-size: 10px; letter-spacing: 2px; opacity: 0.5;">EMERGENCY PROTOCOLS</p>
+            <div class="btn" style="color: #ff5555; border-color: rgba(255,0,0,0.1);" onclick="triggerLevelZero()">Level 0 Reset</div>
+            <div class="btn" style="border-color: rgba(100,200,255,0.2);" onclick="sendSafetySignal()">Send Offline Signal</div>
+        </div>
+    </div>
+
+    <div id="clarity" class="view" style="display:none;">
+        <h2>the hunt</h2>
+        <input id="fox" placeholder="what is the fox?">
+        <input id="unzip" placeholder="unzip: step 1, step 2, step 3..." style="font-size: 12px; opacity: 0.6;">
+        
+        <div style="display:flex; justify-content:center; gap:12px; margin:25px 0;">
+            <div onclick="pickState('yellow')" title="Static">🟡</div>
+            <div onclick="pickState('red')" title="Heat">🔴</div>
+            <div onclick="pickState('orange')" title="Threat">🟠</div>
+            <div onclick="pickState('purple')" title="Pressure">🟣</div>
+            <div onclick="pickState('blue')" title="Gravity">🔵</div>
+        </div>
+        <div class="btn" style="background: rgba(255,255,255,0.12); margin-top: 20px;" onclick="activateHunt()">Engage Shroud</div>
+    </div>
+
+    <div id="launchpad" class="view" style="display:none;">
+        <h2>launchpad</h2>
+        <p style="font-size: 11px; opacity: 0.5; margin-bottom: 20px;">ANCHOR ITEMS SECURED?</p>
+        <div id="launchItems">
+            <div class="launchpad-item"><span>Keys</span> <input type="checkbox"></div>
+            <div class="launchpad-item"><span>Wallet</span> <input type="checkbox"></div>
+            <div class="launchpad-item"><span>Phone</span> <input type="checkbox"></div>
+            <div class="launchpad-item"><span>Medication</span> <input type="checkbox"></div>
+        </div>
+        <div class="btn" onclick="nav('home')" style="margin-top: 20px; opacity: 0.6;">System Ready</div>
+    </div>
+
+    <div id="dump" class="view" style="display:none;">
+        <h2>the descent</h2>
+        <p style="font-size: 11px; opacity: 0.5; margin-bottom: 10px;">EMPTY THE RAM</p>
+        <textarea id="dumpInput" rows="8" placeholder="Brain dump open loops here..."></textarea>
+        <div class="btn" onclick="processDump()">Clear Loops</div>
+    </div>
+</div>
+
+<div class="tabbar" id="navigation">
+    <div class="tab active" id="t-home" onclick="nav('home')">pilot</div>
+    <div class="tab" id="t-clarity" onclick="nav('clarity')">hunt</div>
+    <div class="tab" id="t-dump" onclick="nav('dump')">descent</div>
+</div>
+
+<script>
+    let state = 'blue';
+    let steps = [];
+    let currentIdx = 0;
+    let timerInt;
+
+    const anchors = {
+        red: "Be still. The Pilot is offline. Ice water first.",
+        orange: "You are anchored. You are safe. Breathe out.",
+        purple: "Externalize the loops. Trust the system.",
+        yellow: "Visual silence required. Shield your focus.",
+        blue: "Low battery detected. Gravity is high. MVS only."
+    };
+
+    // NAVIGATION SYSTEM
+    function nav(id) {
+        document.querySelectorAll(".view").forEach(v => v.style.display = "none");
+        document.getElementById(id).style.display = "block";
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        if (document.getElementById('t-' + id)) document.getElementById('t-' + id).classList.add("active");
+        checkRipple();
+    }
+
+    // STATE REGULATION
+    function pickState(s) {
+        state = s; 
+        document.body.className = s;
+        if (s === 'red' || s === 'orange') {
+            localStorage.setItem('rippleStart', Date.now());
+        }
+    }
+
+    // RIPPLE TRACKER (72-HOUR BIO-DEBT)
+    function checkRipple() {
+        let r = localStorage.getItem('rippleStart');
+        if (r) {
+            let hours = (Date.now() - r) / 3600000;
+            if (hours < 72) {
+                document.getElementById('rippleBadge').style.display = 'block';
+                document.getElementById('rippleBadge').innerText = `⚠️ Recovery Ripple: Day ${Math.ceil(hours / 24)}/3`;
+            } else { 
+                document.getElementById('rippleBadge').style.display = 'none'; 
+            }
+        }
+    }
+
+    // THE HUNT ENGINE
+    function activateHunt() {
+        let fox = document.getElementById('fox').value || "the great fox";
+        let unzipped = document.getElementById('unzip').value.split(',').filter(x => x.trim());
+        
+        // Biological Protocol Build
+        if (state === 'red') steps = ["🧊 Ice water on face (Vagal Reset)", "Drink 8oz Water", "Pick MVS"];
+        else if (state === 'orange') steps = ["✋ 5-4-3-2-1 Grounding", "Verbalize: I am safe", "Pick MVS"];
+        else if (state === 'purple') steps = ["✍️ Complete Brain Dump (Tab 3)", "Choose one movement"];
+        else steps = ["Visual Silence Check", "Open the side door"];
+
+        // Add Unzipped Tasks
+        if (unzipped.length > 0) steps = steps.concat(unzipped);
+        
+        steps.push("2-Minute Sprint: " + fox);
+
+        currentIdx = 0;
+        document.body.classList.add('shrouded');
+        document.getElementById('shroudAnchor').innerText = anchors[state];
+        showShroudStep();
+    }
+
+    function showShroudStep() {
+        document.getElementById('shroudStep').innerText = steps[currentIdx];
+        if (steps[currentIdx].includes("2-Minute")) {
+            startTimer(120);
+        } else {
+            clearInterval(timerInt);
+            document.getElementById('timer').innerText = "---";
+        }
+    }
+
+    function advanceStep() {
+        currentIdx++;
+        if (currentIdx < steps.length) {
+            showShroudStep();
+        } else {
+            document.body.classList.remove('shrouded');
+            clearInterval(timerInt);
+            // Increment Streak
+            let streak = parseInt(localStorage.getItem('streak') || 0) + 1;
+            localStorage.setItem('streak', streak);
+            updateHome();
+            nav('home');
+        }
+    }
+
+    function startTimer(s) {
+        clearInterval(timerInt);
+        let t = s;
+        timerInt = setInterval(() => {
+            let m = Math.floor(t / 60); 
+            let sec = t % 60;
+            document.getElementById('timer').innerText = `${m}:${sec < 10 ? '0' : ''}${sec}`;
+            if (t-- <= 0) { 
+                clearInterval(timerInt); 
+                document.getElementById('timer').innerText = "DONE"; 
+            }
+        }, 1000);
+    }
+
+    // EMERGENCY FUNCTIONS
+    function triggerLevelZero() {
+        document.body.className = 'level-zero';
+        alert("LEVEL 0 RESET:\n1. Darkness (Eyes closed)\n2. Compression (Weight)\n3. Hydration\n4. Sleep.");
+    }
+
+    function sendSafetySignal() {
+        const contact = ""; // Add phone number here for automation
+        const message = encodeURIComponent("Architect Protocol: I have hit Level 0. I am safe but going offline for recovery. Will check in later.");
+        window.location.href = `sms:${contact}?&body=${message}`;
+    }
+
+    function processDump() {
+        document.getElementById('dumpInput').value = "";
+        alert("RAM Cleared. Loops externalized.");
+        nav('home');
+    }
+
+    function updateHome() {
+        document.getElementById('streak').innerText = `ARCHITECT STREAK: ${localStorage.getItem('streak') || 0} DAYS`;
+    }
+
+    // INITIALIZE
+    updateHome();
+    nav('home');
+</script>
+</body>
+</html>
