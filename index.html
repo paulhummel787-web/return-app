@@ -1,284 +1,1074 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Architect Mind OS</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-<style>
-body {
-    font-family: sans-serif;
-}
-
-/* GLASS PANEL */
-.glass-panel {
-    backdrop-filter: blur(20px);
-    background: rgba(255,255,255,0.05);
-}
-
-/* SCROLL */
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.1);
-}
-</style>
-
-</head>
-
-<body class="bg-black text-white">
-
-<!-- ⚡ FLOAT BUTTON -->
-<button id="panic-btn"
-class="fixed bottom-6 right-6 w-20 h-20 rounded-full bg-white text-black text-3xl shadow-2xl z-[9999]">
-⚡
-</button>
-
-<!-- ⚡ MODAL -->
-<div id="panic-modal"
-class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[9999]">
-
-  <div class="glass-panel p-10 text-center w-80 rounded-[2rem]">
-
-    <h2 class="mb-6 font-bold text-lg">System State</h2>
-
-    <div class="flex justify-between text-2xl mb-6">
-      <button onclick="triggerState('yellow')">🟡</button>
-      <button onclick="triggerState('red')">🔴</button>
-      <button onclick="triggerState('orange')">🟠</button>
-      <button onclick="triggerState('purple')">🟣</button>
-      <button onclick="triggerState('blue')">🔵</button>
-    </div>
-
-    <div id="action-box" class="mb-4 text-sm opacity-80"></div>
-
-    <button onclick="closePanic()" class="bg-white text-black px-4 py-2 rounded">
-      Exit
-    </button>
-
-  </div>
-</div>
-
-<main class="p-10 space-y-20">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architect's Mind | Command Center v7.0.1</title>
+    <link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     
-<!-- ================= DASHBOARD ================= -->
-<section class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-
-    <!-- GOVERNOR -->
-    <div class="glass-panel p-10 rounded-[3rem]">
-        <h3 class="text-2xl font-bold mb-6">Cognitive Governor</h3>
-
-        <canvas id="govChart" class="mb-10"></canvas>
-
-        <input type="range" id="govSlider" min="10" max="100" value="70" class="w-full">
-
-        <p class="mt-6 text-sm opacity-60">
-            Protect the 30% buffer to avoid collapse.
-        </p>
-    </div>
-
-    <!-- RIPPLE -->
-    <div class="glass-panel p-10 rounded-[3rem]">
-        <h3 class="text-2xl font-bold mb-6">72 Hour Ripple</h3>
-
-        <canvas id="rippleChart"></canvas>
-
-        <p class="mt-6 text-sm opacity-60">
-            Energy spent today is borrowed from tomorrow.
-        </p>
-    </div>
-
-</section>
-
-
-<!-- ================= ANCHORS ================= -->
-<section class="glass-panel p-10 rounded-[3rem] space-y-10">
-
-    <h2 class="text-3xl font-bold">Identity Anchors</h2>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        <div class="p-6 bg-white/5 rounded-xl">
-            <p class="italic">“I am fearfully and wonderfully made.”</p>
-            <p class="text-xs opacity-50 mt-2">Psalm 139:14</p>
-        </div>
-
-        <div class="p-6 bg-white/5 rounded-xl">
-            <p class="italic">“God has given me a sound mind.”</p>
-            <p class="text-xs opacity-50 mt-2">2 Timothy 1:7</p>
-        </div>
-
-        <div class="p-6 bg-white/5 rounded-xl">
-            <p class="italic">“Perfect peace comes from focus.”</p>
-            <p class="text-xs opacity-50 mt-2">Isaiah 26:3</p>
-        </div>
-
-        <div class="p-6 bg-white/5 rounded-xl">
-            <p class="italic">“Grace is sufficient in weakness.”</p>
-            <p class="text-xs opacity-50 mt-2">2 Corinthians 12:9</p>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================= HABITS ================= -->
-<section class="grid grid-cols-1 lg:grid-cols-2 gap-12">
-
-    <div class="glass-panel p-10 rounded-[3rem]">
-        <h3 class="text-2xl font-bold mb-6">Daily Integrity</h3>
-        <div id="habit-audit-list"></div>
-    </div>
-
-    <!-- HISTORY -->
-    <div class="glass-panel p-10 rounded-[3rem]">
-        <h3 class="text-2xl font-bold mb-6">System Log</h3>
-
-        <div id="log-list" class="space-y-4 max-h-[300px] overflow-y-auto"></div>
-    </div>
-
-</section>
-
-
-</main>
-
-<footer class="text-center opacity-30 text-xs pb-10">
-ARCHITECT_MIND_OS_v7_REBUILT
-</footer>
-<script>
-
-// ================= INIT =================
-window.onload = () => {
-    initCharts();
-    renderHabits();
-    loadLogs();
-};
-
-// ================= CHARTS =================
-let govChart, rippleChart;
-
-function initCharts() {
-    const govCtx = document.getElementById('govChart');
-    const rippleCtx = document.getElementById('rippleChart');
-
-    govChart = new Chart(govCtx, {
-        type: 'doughnut',
-        data: {
-            datasets: [{
-                data: [70, 30]
-            }]
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@100;400;700&family=Playfair+Display:ital,wght@0,900;1,900&display=swap');
+        
+        :root {
+            --bg-base: #fcfbf9;
+            --text-main: #1c1917;
+            --panel-bg: rgba(255, 255, 255, 0.7);
+            --border-color: rgba(0, 0, 0, 0.06);
+            --glass-shadow: 0 20px 50px -12px rgba(0,0,0,0.05);
+            --accent-gold: #b45309;
+            --fluid-80: clamp(3rem, 8vw, 12rem);
         }
-    });
 
-    rippleChart = new Chart(rippleCtx, {
-        type: 'line',
-        data: {
-            labels: ['Now', '24h', '48h', '72h'],
-            datasets: [{
-                data: [100, 80, 60, 40]
-            }]
+        .dark-mode {
+            --bg-base: #050505;
+            --text-main: #efeee5;
+            --panel-bg: rgba(15, 15, 15, 0.8);
+            --border-color: rgba(255, 255, 255, 0.06);
+            --glass-shadow: 0 30px 60px -12px rgba(0,0,0,0.7);
         }
-    });
 
-    document.getElementById("govSlider").addEventListener("input", (e) => {
-        let val = e.target.value;
-        govChart.data.datasets[0].data = [val, 100 - val];
-        govChart.update();
-    });
-}
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-base); 
+            color: var(--text-main); 
+            transition: background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1), color 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+        }
 
-// ================= HABITS =================
-const habits = [
-    { id: 'h1', label: 'Hydration' },
-    { id: 'h2', label: 'Sunlight' },
-    { id: 'h3', label: 'Protein' },
-    { id: 'h4', label: 'Movement' }
-];
+        /* Typography */
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        .font-display { font-family: 'Playfair Display', serif; }
+        .tracking-ultra { tracking-widest: 0.6em; }
 
-function renderHabits() {
-    const container = document.getElementById('habit-audit-list');
-    let saved = JSON.parse(localStorage.getItem('habits')) || {};
+        /* UI Primitives */
+        .glass-panel { 
+            background: var(--panel-bg); 
+            backdrop-filter: blur(30px) saturate(180%); 
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border: 1px solid var(--border-color); 
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .interactive-card { 
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); 
+            cursor: pointer; 
+            border: 1px solid transparent; 
+        }
+        .interactive-card:hover { 
+            transform: translateY(-8px) scale(1.01); 
+            box-shadow: 0 30px 40px -10px rgba(0,0,0,0.1); 
+            border-color: currentColor; 
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(128,128,128,0.2); border-radius: 10px; }
 
-    container.innerHTML = habits.map(h => `
-        <label class="block mb-3">
-            <input type="checkbox"
-                ${saved[h.id] ? 'checked' : ''}
-                onchange="toggleHabit('${h.id}')">
-            ${h.label}
-        </label>
-    `).join('');
-}
+        /* Complex Animations */
+        @keyframes reveal { from { opacity: 0; transform: translateY(30px); filter: blur(10px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+        .reveal { animation: reveal 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        
+        @keyframes pulse-ring { 
+            0% { transform: scale(0.95); opacity: 0.8; } 
+            50% { transform: scale(1.05); opacity: 0.4; } 
+            100% { transform: scale(0.95); opacity: 0.8; } 
+        }
+        .animate-pulse-ring { animation: pulse-ring 4s infinite ease-in-out; }
 
-function toggleHabit(id) {
-    let saved = JSON.parse(localStorage.getItem('habits')) || {};
-    saved[id] = !saved[id];
-    localStorage.setItem('habits', JSON.stringify(saved));
-}
+        .step-inactive { opacity: 0.1; filter: grayscale(1) blur(2px); pointer-events: none; transition: 0.8s; }
+        .step-active { opacity: 1; filter: grayscale(0) blur(0); pointer-events: auto; }
 
-// ================= LOG SYSTEM =================
-function logState(state) {
-    let logs = JSON.parse(localStorage.getItem('logs')) || [];
+        input[type="range"] { -webkit-appearance: none; background: rgba(0,0,0,0.05); height: 4px; border-radius: 2px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 18px; width: 18px; border-radius: 50%; background: var(--text-main); cursor: pointer; border: 4px solid var(--bg-base); box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
 
-    logs.unshift({
-        state: state,
-        time: new Date().toLocaleString()
-    });
+        .flare-copy-btn:active { transform: scale(0.9); }
+    </style>
+</head>
+<body class="antialiased selection:bg-amber-200 selection:text-black pb-48">
 
-    localStorage.setItem('logs', JSON.stringify(logs));
-    loadLogs();
-}
+    <nav class="fixed top-0 w-full z-[200] border-b border-transparent transition-all duration-500" id="main-nav">
+        <div class="max-w-[120rem] mx-auto px-10 h-24 flex justify-between items-center">
+            <div class="flex items-center gap-10">
+                <div class="group relative">
+                    <div class="w-12 h-12 bg-current rounded-full flex items-center justify-center text-white invert font-black text-xs transition-transform group-hover:rotate-180 duration-700">A</div>
+                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-4 border-white dark:border-black animate-pulse"></div>
+                </div>
+                <div class="hidden lg:block">
+                    <span class="font-black text-[10px] tracking-[0.6em] uppercase block opacity-80">System Command</span>
+                    <span class="text-[9px] font-mono opacity-30 uppercase tracking-widest">Build 7.0.1_ARM</span>
+                </div>
+            </div>
+            
+            <div class="hidden xl:flex gap-16 text-[9px] font-black uppercase tracking-[0.4em] opacity-40">
+                <a href="#triage" class="hover:opacity-100 transition flex items-center gap-3"><span class="opacity-20">01</span> Triage</a>
+                <a href="#flares" class="hover:opacity-100 transition flex items-center gap-3"><span class="opacity-20">02</span> Flares</a>
+                <a href="#execution" class="hover:opacity-100 transition flex items-center gap-3"><span class="opacity-20">03</span> Shields</a>
+                <a href="#mechanics" class="hover:opacity-100 transition flex items-center gap-3"><span class="opacity-20">04</span> Bios</a>
+                <a href="#anchors" class="hover:opacity-100 transition flex items-center gap-3"><span class="opacity-20">05</span> Library</a>
+            </div>
 
-function loadLogs() {
-    let logs = JSON.parse(localStorage.getItem('logs')) || [];
-    const container = document.getElementById('log-list');
-
-    container.innerHTML = logs.map(l => `
-        <div class="p-3 bg-white/5 rounded">
-            <b>${l.state}</b><br>
-            <span class="text-xs opacity-50">${l.time}</span>
+            <div class="flex items-center gap-10">
+                <button onclick="toggleDarkMode()" class="group flex items-center gap-4 text-[10px] font-black uppercase tracking-widest opacity-60 hover:opacity-100 transition">
+                    <span id="mode-text">Fog Mode</span>
+                    <div class="w-12 h-6 rounded-full bg-current/10 relative">
+                        <div id="mode-toggle-circle" class="absolute left-1 top-1 w-4 h-4 bg-current rounded-full transition-all duration-500"></div>
+                    </div>
+                </button>
+                <div class="h-6 w-px bg-current opacity-10"></div>
+                <div class="flex flex-col items-end">
+                    <span id="nav-clock" class="font-mono text-lg font-bold tracking-tighter">00:00:00</span>
+                    <span class="text-[8px] font-black uppercase tracking-widest opacity-30">Universal Time</span>
+                </div>
+            </div>
         </div>
-    `).join('');
-}
+    </nav>
+  <header class="pt-44 pb-20 px-10 max-w-[120rem] mx-auto reveal">
+        <div class="grid grid-cols-1 xl:grid-cols-12 gap-20 items-center">
+            <div class="xl:col-span-7">
+                <div class="inline-flex items-center gap-4 mb-8">
+                    <span class="w-12 h-px bg-current opacity-20"></span>
+                    <span class="text-[10px] font-black uppercase tracking-[0.6em] opacity-40 italic">Operational Philosophy</span>
+                </div>
+                <h1 class="text-8xl md:text-[11rem] font-display leading-[0.8] mb-12 tracking-tighter">
+                    THE PILOT <br>
+                    <span class="opacity-20 italic font-thin font-serif text-[0.85em]">vs THE STORM</span>
+                </h1>
+                <p class="text-xl md:text-2xl opacity-50 font-medium max-w-3xl leading-relaxed mb-16">
+                    This is your external <span class="text-current opacity-100 font-black">Pre-Frontal Cortex</span>. 
+                    When biological load exceeds capacity, do not attempt to "think." 
+                    Follow the architecture. Trust the protocol.
+                </p>
+                <div class="flex flex-wrap gap-8">
+                    <a href="#triage" class="bg-current text-white dark:text-black invert px-14 py-7 rounded-[2rem] font-black uppercase tracking-widest text-[11px] hover:scale-105 transition shadow-2xl flex items-center gap-4">
+                        <span>Initiate System Triage</span>
+                        <i class="fas fa-crosshairs text-[10px]"></i>
+                    </a>
+                    <a href="#anchors" class="glass-panel px-14 py-7 rounded-[2rem] font-black uppercase tracking-widest text-[11px] hover:bg-current hover:text-white transition flex items-center gap-4">
+                        <span>Identity Anchors</span>
+                        <i class="fas fa-anchor text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+            
+            <div class="xl:col-span-5 hidden xl:block">
+                <div class="glass-panel p-16 rounded-[4.5rem] relative overflow-hidden group border-2 border-current/5">
+                    <h3 class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30 mb-10 italic">System Integrity Map</h3>
+                    <div class="space-y-4 relative z-10">
+                        <div class="flex items-center justify-between p-5 rounded-3xl bg-amber-500/5 text-amber-600 dark:text-amber-400 border border-amber-500/10 hover:bg-amber-500/10 transition group/item">
+                            <span class="font-black text-[10px] uppercase tracking-tighter">Scattered Current (ADHD)</span>
+                            <div class="flex gap-1">
+                                <div class="w-1 h-3 bg-current rounded-full"></div>
+                                <div class="w-1 h-3 bg-current rounded-full opacity-30"></div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between p-5 rounded-3xl bg-red-500/5 text-red-600 dark:text-red-400 border border-red-500/10 hover:bg-red-500/10 transition">
+                            <span class="font-black text-[10px] uppercase tracking-tighter">Emotional Heat (BPD)</span>
+                            <i class="fas fa-fire-alt text-[10px]"></i>
+                        </div>
+                        <div class="flex items-center justify-between p-5 rounded-3xl bg-blue-500/5 text-blue-600 dark:text-blue-400 border border-blue-500/10 hover:bg-blue-500/10 transition">
+                            <span class="font-black text-[10px] uppercase tracking-tighter">Gravity Drop (MDD)</span>
+                            <i class="fas fa-arrow-down text-[10px]"></i>
+                        </div>
+                    </div>
+                    <div class="mt-10 pt-10 border-t border-current/5">
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[9px] font-black uppercase opacity-30 tracking-widest">Cognitive Buffer</span>
+                            <span class="text-[10px] font-mono font-bold">70.4%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-current/5 rounded-full overflow-hidden">
+                            <div class="w-[70%] h-full bg-current rounded-full opacity-40"></div>
+                        </div>
+                    </div>
+                    <i class="fas fa-microchip absolute -right-20 -bottom-20 text-[260px] opacity-[0.02] group-hover:rotate-12 transition-transform duration-[3s]"></i>
+                </div>
+            </div>
+        </div>
+    </header>
 
-// ================= WIDGET ACTIONS =================
-const widgetActions = {
-    yellow: "Reduce input. Focus on ONE thing.",
-    red: "Cold water. Slow breathing.",
-    orange: "Ground yourself. Name 3 things.",
-    purple: "Write everything down.",
-    blue: "Rest. No pressure."
-};
+    <main class="max-w-[120rem] mx-auto px-10 space-y-40">
 
-// ================= WIDGET CONTROLS =================
-document.getElementById("panic-btn").addEventListener("click", () => {
-    document.getElementById("panic-modal").classList.remove("hidden");
-    document.getElementById("panic-modal").classList.add("flex");
-});
+        <section id="triage" class="space-y-20 relative">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-10">
+                <div class="border-l-8 border-current pl-10">
+                    <h2 class="text-[11px] font-black uppercase tracking-[0.7em] opacity-20 mb-4">Phase 01</h2>
+                    <h3 class="text-7xl font-black tracking-tighter">Diagnostic Matrix</h3>
+                    <p class="text-sm opacity-40 mt-6 font-bold uppercase tracking-[0.2em] max-w-xl">Identify the biological frequency currently dominating the internal architecture.</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <div class="text-right hidden sm:block">
+                        <span class="block text-[10px] font-black uppercase opacity-20 tracking-widest">Active State</span>
+                        <span id="active-state-indicator" class="text-xs font-mono font-bold uppercase">System: Idle</span>
+                    </div>
+                    <div class="w-12 h-12 rounded-full border border-current/10 flex items-center justify-center animate-pulse">
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                </div>
+            </div>
 
-function closePanic() {
-    document.getElementById("panic-modal").classList.add("hidden");
-    document.getElementById("panic-modal").classList.remove("flex");
-    document.getElementById("action-box").innerHTML = "";
-}
+            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-7 gap-6">
+                <button onclick="activateSystemState('yellow')" class="interactive-card p-12 rounded-[3.5rem] bg-yellow-50/50 dark:bg-yellow-900/10 text-yellow-900 dark:text-yellow-400 text-left border border-yellow-200 dark:border-yellow-900/20 group" id="btn-yellow">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-yellow-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🟡</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Static</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">ADHD Flux</p>
+                </button>
 
-function triggerState(state) {
+                <button onclick="activateSystemState('red')" class="interactive-card p-12 rounded-[3.5rem] bg-red-50/50 dark:bg-red-900/10 text-red-900 dark:text-red-400 text-left border border-red-200 dark:border-red-900/20 group" id="btn-red">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🔴</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Heat</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">BPD Redline</p>
+                </button>
 
-    document.getElementById("action-box").innerHTML = `
-        <p>${widgetActions[state]}</p>
-        <p class="mt-2 font-bold">This is temporary</p>
-    `;
+                <button onclick="activateSystemState('orange')" class="interactive-card p-12 rounded-[3.5rem] bg-orange-50/50 dark:bg-orange-900/10 text-orange-900 dark:text-orange-400 text-left border border-orange-200 dark:border-orange-900/20 group" id="btn-orange">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🟠</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Threat</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">CPTSD Echo</p>
+                </button>
 
-    logState(state);
-}
+                <button onclick="activateSystemState('purple')" class="interactive-card p-12 rounded-[3.5rem] bg-purple-50/50 dark:bg-purple-900/10 text-purple-900 dark:text-purple-400 text-left border border-purple-200 dark:border-purple-900/20 group" id="btn-purple">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-purple-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🟣</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Pressure</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">GAD Spiral</p>
+                </button>
 
-</script>
+                <button onclick="activateSystemState('blue')" class="interactive-card p-12 rounded-[3.5rem] bg-blue-50/50 dark:bg-blue-900/10 text-blue-900 dark:text-blue-400 text-left border border-blue-200 dark:border-blue-900/20 group" id="btn-blue">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-blue-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🔵</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Gravity</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">MDD Sink</p>
+                </button>
 
+                <button onclick="activateSystemState('white')" class="interactive-card p-12 rounded-[3.5rem] bg-stone-100 dark:bg-stone-800/40 text-stone-900 dark:text-stone-300 text-left border border-stone-300 dark:border-stone-700 group" id="btn-white">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-stone-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">⚪</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Fog</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">PFC Bypass</p>
+                </button>
+
+                <button onclick="activateSystemState('green')" class="interactive-card p-12 rounded-[3.5rem] bg-emerald-50/50 dark:bg-emerald-900/10 text-emerald-900 dark:text-emerald-400 text-left border border-emerald-200 dark:border-emerald-900/20 group" id="btn-green">
+                    <div class="mb-10 w-16 h-16 rounded-3xl bg-emerald-500/10 flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">🟢</div>
+                    <h4 class="font-black text-[11px] uppercase tracking-[0.4em] mb-2">Pulse</h4>
+                    <p class="text-[9px] opacity-40 font-mono font-bold uppercase">Clear Skies</p>
+                </button>
+            </div>
+          <div id="triage-dashboard" class="hidden glass-panel rounded-[4.5rem] p-12 lg:p-24 shadow-2xl border-2 border-transparent transition-all duration-1000 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-12 opacity-[0.03] pointer-events-none">
+                    <i class="fas fa-stethoscope text-[200px]"></i>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-12 pt-10">
+                <div class="lg:col-span-1 py-8">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30 mb-6">Environment Check</h4>
+                    <p class="text-xs opacity-40 font-bold leading-relaxed uppercase tracking-widest">The mind is a prisoner of the body. If the room is loud, the mind is loud. Check the physical container before the psychological one.</p>
+                </div>
+                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <label class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-black/5 dark:bg-white/5 cursor-pointer hover:bg-black/10 transition-all border border-transparent hover:border-current/10 group">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="updateAudit()" class="audit-check appearance-none w-7 h-7 rounded-full border-2 border-current/20 checked:bg-current transition-all" id="aud-light">
+                            <i class="fas fa-check absolute text-[10px] text-white dark:text-black opacity-0 peer-checked:opacity-100 pointer-events-none"></i>
+                        </div>
+                        <div>
+                            <span class="block text-[11px] font-black uppercase tracking-[0.3em] mb-1">Visual Silence</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">Lighting Adjusted / Visual Clutter Minimized</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-black/5 dark:bg-white/5 cursor-pointer hover:bg-black/10 transition-all border border-transparent hover:border-current/10 group">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="updateAudit()" class="audit-check appearance-none w-7 h-7 rounded-full border-2 border-current/20 checked:bg-current transition-all" id="aud-sound">
+                        </div>
+                        <div>
+                            <span class="block text-[11px] font-black uppercase tracking-[0.3em] mb-1">Audio Barrier</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">Noise Canceling Active / Brown Noise Initialized</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-black/5 dark:bg-white/5 cursor-pointer hover:bg-black/10 transition-all border border-transparent hover:border-current/10 group">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="updateAudit()" class="audit-check appearance-none w-7 h-7 rounded-full border-2 border-current/20 checked:bg-current transition-all" id="aud-water">
+                        </div>
+                        <div>
+                            <span class="block text-[11px] font-black uppercase tracking-[0.3em] mb-1">Biological Coolant</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">20oz Hydration Consumed / Cortisol Flush</span>
+                        </div>
+                    </label>
+                    <label class="flex items-center gap-8 p-8 rounded-[2.5rem] bg-black/5 dark:bg-white/5 cursor-pointer hover:bg-black/10 transition-all border border-transparent hover:border-current/10 group">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="updateAudit()" class="audit-check appearance-none w-7 h-7 rounded-full border-2 border-current/20 checked:bg-current transition-all" id="aud-temp">
+                        </div>
+                        <div>
+                            <span class="block text-[11px] font-black uppercase tracking-[0.3em] mb-1">Thermal Shift</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">Room Below 68°F / Face Splashed with Cold Water</span>
+                        </div>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <section id="flares" class="space-y-16">
+            <div class="border-l-8 border-current pl-10">
+                <h2 class="text-[11px] font-black uppercase tracking-[0.7em] opacity-20 mb-4">Phase 02</h2>
+                <h3 class="text-7xl font-black tracking-tighter">Signal Flares</h3>
+                <p class="text-sm opacity-40 mt-6 font-bold uppercase tracking-[0.2em] max-w-xl">When language processing goes offline (White Fog), use these pre-calculated scripts to communicate with the outside world. Offload the burden of explanation.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="glass-panel p-12 rounded-[3.5rem] flex flex-col justify-between group hover:border-blue-500/30 transition-all border-2 border-transparent">
+                    <div>
+                        <div class="flex items-center gap-4 mb-10">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Professional Delay</span>
+                        </div>
+                        <p class="text-sm font-medium leading-relaxed mb-12 italic opacity-80" id="flare-pro-text">"I am currently managing a high cognitive load and am offline for language-heavy tasks. I will review your message and respond once system capacity is restored. Thank you for your patience."</p>
+                    </div>
+                    <button onclick="copyFlare('flare-pro-text')" class="flare-copy-btn w-full bg-current text-white dark:text-black invert py-6 rounded-[1.5rem] font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-4 group-hover:scale-[1.02] transition-transform">
+                        <span>Copy Flare</span>
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <div class="glass-panel p-12 rounded-[3.5rem] flex flex-col justify-between group hover:border-red-500/30 transition-all border-2 border-transparent">
+                    <div>
+                        <div class="flex items-center gap-4 mb-10">
+                            <div class="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500">
+                                <i class="fas fa-shield-heart"></i>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Social Power-Save</span>
+                        </div>
+                        <p class="text-sm font-medium leading-relaxed mb-12 italic opacity-80" id="flare-social-text">"Hey. I’m currently in a shutdown state (White Fog). It’s not about you, but I can't process words or socialize right now. I’m going into power-save mode to reset. I’ll check in when I’m back on the surface."</p>
+                    </div>
+                    <button onclick="copyFlare('flare-social-text')" class="flare-copy-btn w-full bg-current text-white dark:text-black invert py-6 rounded-[1.5rem] font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-4 group-hover:scale-[1.02] transition-transform">
+                        <span>Copy Flare</span>
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+
+                <div class="glass-panel p-12 rounded-[3.5rem] flex flex-col justify-between group hover:border-amber-500/30 transition-all border-2 border-transparent">
+                    <div>
+                        <div class="flex items-center gap-4 mb-10">
+                            <div class="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <span class="text-[10px] font-black uppercase tracking-[0.3em] opacity-40">Urgent Anchor Request</span>
+                        </div>
+                        <p class="text-sm font-black leading-relaxed mb-12 uppercase tracking-tighter text-amber-600 dark:text-amber-400" id="flare-911-text">"REDLINE ALERT. I am at capacity and cannot safely navigate the next 60 minutes alone. I need a grounding anchor. Can you call me and just talk about something mundane for 10 minutes? No deep talk required."</p>
+                    </div>
+                    <button onclick="copyFlare('flare-911-text')" class="flare-copy-btn w-full bg-amber-500 text-white py-6 rounded-[1.5rem] font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-4 group-hover:scale-[1.02] transition-transform shadow-xl shadow-amber-500/20">
+                        <span>Send Emergency Flare</span>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+      <section id="resets" class="grid grid-cols-1 xl:grid-cols-2 gap-12">
+            
+            <div id="vagus-engine" class="bg-stone-900 text-white dark:bg-black rounded-[4.5rem] p-12 lg:p-24 flex flex-col justify-between min-h-[850px] relative overflow-hidden border border-stone-800 shadow-3xl group">
+                <div class="relative z-10">
+                    <div class="flex items-center gap-5 mb-10">
+                        <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.6)]"></div>
+                        <h4 class="text-[11px] font-black uppercase tracking-[0.6em] text-red-400">Biological Level 0 Reset</h4>
+                    </div>
+                    <h3 class="text-7xl font-black tracking-tighter mb-10 leading-[0.9]">90-Second <br> Vagus Flush</h3>
+                    <p class="text-lg opacity-40 max-w-sm leading-relaxed font-medium">The 4-7-8 rhythm is a mechanical hack. It forces the nervous system to exit the 'Threat' frequency. Chemistry takes 90 seconds to reset. Do not think. Just follow the pulse.</p>
+                </div>
+
+                <div class="relative z-10 flex flex-col items-center justify-center py-16">
+                    <div class="relative w-80 h-80 flex items-center justify-center">
+                        <div id="breathe-circle" class="absolute inset-0 bg-white rounded-full opacity-5 blur-3xl transition-all duration-[4000ms]"></div>
+                        <div class="absolute inset-0 border-[1px] border-white/10 rounded-full scale-125"></div>
+                        <div class="absolute inset-0 border-[4px] border-white/5 rounded-full scale-110"></div>
+                        
+                        <div class="text-center z-10">
+                            <span id="breathe-instruction" class="block text-4xl font-black uppercase tracking-[0.3em] mb-4">Ready</span>
+                            <div class="h-px w-12 bg-white/20 mx-auto mb-6"></div>
+                            <span id="breathe-timer" class="block text-7xl font-mono font-light opacity-30">90</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="relative z-10 grid grid-cols-4 gap-6">
+                    <button onclick="startBreathing()" id="btn-breathe" class="col-span-3 bg-white text-black py-8 rounded-[2.5rem] font-black uppercase tracking-[0.3em] text-[12px] hover:invert transition-all duration-700 shadow-2xl active:scale-95">
+                        Initiate Flush Sequence
+                    </button>
+                    <button onclick="stopBreathing()" class="bg-white/5 text-white py-8 rounded-[2.5rem] font-black uppercase text-xs hover:bg-red-900/40 transition-colors border border-white/10 flex items-center justify-center">
+                        <i class="fas fa-stop"></i>
+                    </button>
+                </div>
+
+                <i class="fas fa-lungs absolute -right-32 -bottom-32 text-[450px] opacity-[0.02] pointer-events-none group-hover:opacity-[0.04] transition-opacity duration-1000"></i>
+            </div>
+
+            <div id="grounding" class="glass-panel rounded-[4.5rem] p-12 lg:p-24 flex flex-col justify-between min-h-[850px] border-2 border-transparent transition-all duration-700">
+                <div class="relative">
+                    <h4 class="text-[11px] font-black uppercase tracking-[0.6em] opacity-30 mb-10 italic">Protocol 02: Safety Wizard</h4>
+                    <h3 class="text-7xl font-black tracking-tighter mb-12 leading-[0.9]">5-4-3-2-1 <br> Grounding</h3>
+                    <div class="h-1.5 w-24 bg-current rounded-full mb-12 opacity-10"></div>
+                </div>
+
+                <div id="grounding-stack" class="space-y-4">
+                    <div id="g-step-5" class="step-inactive flex items-center gap-10 p-8 rounded-[3rem] bg-black/5 dark:bg-white/5 border border-transparent">
+                        <div class="w-16 h-16 rounded-2xl bg-current/5 flex items-center justify-center text-3xl font-black font-mono opacity-20">5</div>
+                        <div>
+                            <h5 class="text-[11px] font-black uppercase tracking-widest mb-1">Visual Anchors</h5>
+                            <p class="text-sm opacity-50 font-medium">Identify 5 distinct objects you can see right now.</p>
+                        </div>
+                    </div>
+                    <div id="g-step-4" class="step-inactive flex items-center gap-10 p-8 rounded-[3rem] bg-black/5 dark:bg-white/5 border border-transparent">
+                        <div class="w-16 h-16 rounded-2xl bg-current/5 flex items-center justify-center text-3xl font-black font-mono opacity-20">4</div>
+                        <div>
+                            <h5 class="text-[11px] font-black uppercase tracking-widest mb-1">Physical Tactile</h5>
+                            <p class="text-sm opacity-50 font-medium">Identify 4 things you can physically feel (texture/weight).</p>
+                        </div>
+                    </div>
+                    <div id="g-step-3" class="step-inactive flex items-center gap-10 p-8 rounded-[3rem] bg-black/5 dark:bg-white/5 border border-transparent">
+                        <div class="w-16 h-16 rounded-2xl bg-current/5 flex items-center justify-center text-3xl font-black font-mono opacity-20">3</div>
+                        <div>
+                            <h5 class="text-[11px] font-black uppercase tracking-widest mb-1">Audio Signal</h5>
+                            <p class="text-sm opacity-50 font-medium">Identify 3 sounds (one far, one near, one internal).</p>
+                        </div>
+                    </div>
+                    <div id="g-step-2" class="step-inactive flex items-center gap-10 p-8 rounded-[3rem] bg-black/5 dark:bg-white/5 border border-transparent">
+                        <div class="w-16 h-16 rounded-2xl bg-current/5 flex items-center justify-center text-3xl font-black font-mono opacity-20">2</div>
+                        <div>
+                            <h5 class="text-[11px] font-black uppercase tracking-widest mb-1">Olfactory</h5>
+                            <p class="text-sm opacity-50 font-medium">Identify 2 things you can smell (or favorite smells).</p>
+                        </div>
+                    </div>
+                    <div id="g-step-1" class="step-inactive flex items-center gap-10 p-8 rounded-[3rem] bg-black/5 dark:bg-white/5 border border-transparent">
+                        <div class="w-16 h-16 rounded-2xl bg-current/5 flex items-center justify-center text-3xl font-black font-mono opacity-20">1</div>
+                        <div>
+                            <h5 class="text-[11px] font-black uppercase tracking-widest mb-1">Palate</h5>
+                            <p class="text-sm opacity-50 font-medium">Identify 1 thing you can taste (or physical sensation in mouth).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-12">
+                    <button onclick="nextGroundingStep()" id="btn-grounding" class="w-full bg-current text-white dark:text-black invert py-8 rounded-[2.5rem] font-black uppercase tracking-[0.3em] text-[12px] hover:scale-[1.02] transition-all shadow-xl active:scale-95">
+                        Start Grounding Sequence
+                    </button>
+                </div>
+            </div>
+        </section>
+      <section id="execution" class="space-y-16">
+            <div class="border-l-8 border-current pl-10">
+                <h2 class="text-[11px] font-black uppercase tracking-[0.7em] opacity-20 mb-4">Phase 03</h2>
+                <h3 class="text-7xl font-black tracking-tighter">Execution Shields</h3>
+                <p class="text-sm opacity-40 mt-6 font-bold uppercase tracking-[0.2em] max-w-xl">Do not trust your internal working memory. Externalize every variable to protect the Pre-Frontal Cortex from overload.</p>
+            </div>
+
+            <div class="grid grid-cols-1 xl:grid-cols-12 gap-12">
+                
+                <div class="xl:col-span-7 glass-panel rounded-[4.5rem] p-12 lg:p-20 flex flex-col justify-between border-2 border-transparent">
+                    <div>
+                        <div class="flex justify-between items-start mb-16">
+                            <div>
+                                <h4 class="text-[10px] font-black uppercase tracking-[0.5em] text-amber-600 mb-4">Task Decomposition</h4>
+                                <h3 class="text-5xl font-black tracking-tighter">The Fox & Rabbits</h3>
+                            </div>
+                            <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-amber-600 text-2xl">
+                                <i class="fas fa-paw"></i>
+                            </div>
+                        </div>
+
+                        <div class="space-y-12">
+                            <div class="space-y-6">
+                                <div class="flex items-center gap-4">
+                                    <span class="px-4 py-1 rounded-full bg-amber-500 text-white text-[9px] font-black uppercase tracking-widest">The Fox</span>
+                                    <span class="text-[10px] font-bold opacity-30 uppercase tracking-widest">The Single Vital Objective</span>
+                                </div>
+                                <input type="text" id="fox-input" oninput="saveMemoryShield()" placeholder="Identify the ONE thing that actually moves the needle..." 
+                                    class="w-full bg-transparent border-b-2 border-current/10 py-6 text-2xl font-medium focus:border-amber-500 outline-none transition-colors placeholder:opacity-20">
+                            </div>
+
+                            <div class="space-y-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-4">
+                                        <span class="px-4 py-1 rounded-full bg-stone-500 text-white text-[9px] font-black uppercase tracking-widest">The Rabbits</span>
+                                        <span class="text-[10px] font-bold opacity-30 uppercase tracking-widest">Distractions & 'What-ifs'</span>
+                                    </div>
+                                    <button onclick="clearRabbits()" class="text-[9px] font-black uppercase tracking-widest opacity-30 hover:opacity-100 transition">Flush Rabbits</button>
+                                </div>
+                                <textarea id="rabbit-input" oninput="saveMemoryShield()" placeholder="Dump every distraction here to get it out of your head..." 
+                                    class="w-full bg-black/5 dark:bg-white/5 rounded-[2.5rem] p-8 h-48 text-lg font-medium focus:ring-2 focus:ring-current/10 outline-none transition-all resize-none custom-scrollbar"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-12 p-8 bg-amber-500/5 border border-amber-500/10 rounded-[2.5rem]">
+                        <p class="text-[11px] font-bold leading-relaxed opacity-60 italic">"If you chase two rabbits, you catch neither. Kill the rabbits on paper so you can hunt the Fox in reality."</p>
+                    </div>
+                </div>
+
+                <div class="xl:col-span-5 bg-stone-900 dark:bg-black text-white p-12 lg:p-20 rounded-[4.5rem] shadow-3xl flex flex-col justify-between border border-stone-800 relative overflow-hidden group">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-12">
+                            <div>
+                                <h4 class="text-[11px] font-black uppercase tracking-[0.5em] text-blue-400 mb-4">Flow State Engine</h4>
+                                <h3 class="text-5xl font-black tracking-tighter">Landing Strip</h3>
+                            </div>
+                            <span id="timer-badge" class="px-6 py-2 border border-white/20 rounded-full text-[10px] font-bold uppercase tracking-widest opacity-50">Standby</span>
+                        </div>
+
+                        <div class="text-center py-16">
+                            <div id="flow-clock" class="text-[120px] font-mono font-black tracking-tighter leading-none select-none tabular-nums">25:00</div>
+                            <div class="flex justify-center items-center gap-4 mt-8">
+                                <div class="h-px w-8 bg-blue-500/40"></div>
+                                <p id="flow-phase" class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30">Main Sprint Phase</p>
+                                <div class="h-px w-8 bg-blue-500/40"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative z-10 space-y-6">
+                        <button onclick="startFlowTimer()" id="btn-flow" class="w-full bg-white text-black py-8 rounded-[2.5rem] font-black uppercase tracking-[0.2em] text-[12px] hover:bg-blue-400 transition-all duration-500 shadow-2xl active:scale-95">
+                            Begin 25m Focus Session
+                        </button>
+                        <div class="flex gap-4">
+                            <button onclick="setTimer(10)" class="flex-1 bg-white/5 border border-white/10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition">10m</button>
+                            <button onclick="setTimer(25)" class="flex-1 bg-white/5 border border-white/10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition">25m</button>
+                            <button onclick="setTimer(60)" class="flex-1 bg-white/5 border border-white/10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition">60m</button>
+                        </div>
+                        <p class="text-[9px] text-center opacity-20 italic font-medium leading-relaxed uppercase tracking-widest px-10">Includes a mandatory 2-minute "Landing Strip" buffer to prevent executive function crash upon completion.</p>
+                    </div>
+
+                    <i class="fas fa-space-shuttle absolute -right-16 -bottom-16 text-[280px] opacity-[0.02] -rotate-45 group-hover:opacity-[0.05] transition-all duration-1000"></i>
+                </div>
+            </div>
+        </section>
+      <section id="mechanics" class="grid grid-cols-1 xl:grid-cols-2 gap-12">
+            
+            <div class="glass-panel rounded-[4.5rem] p-12 lg:p-20 flex flex-col border-2 border-transparent">
+                <div class="flex justify-between items-start mb-16">
+                    <div>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30 mb-4">Protocol 05</h4>
+                        <h3 class="text-5xl font-black tracking-tighter">70% Governor</h3>
+                        <p class="text-xs opacity-40 mt-4 font-bold uppercase tracking-widest">Mechanical Capacity Limit</p>
+                    </div>
+                    <div class="text-right">
+                        <span id="gov-val" class="text-6xl font-black font-mono tracking-tighter italic">70%</span>
+                        <span class="block text-[9px] font-black uppercase opacity-20 tracking-[0.3em] mt-2">Active Ceiling</span>
+                    </div>
+                </div>
+
+                <div class="flex-1 min-h-[350px] relative mb-12">
+                    <canvas id="govChart"></canvas>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span class="text-[10px] font-black uppercase tracking-[0.5em] opacity-20 mb-2">Safety Buffer</span>
+                        <span id="buffer-val" class="text-2xl font-mono font-bold opacity-40">30%</span>
+                    </div>
+                </div>
+
+                <div class="space-y-10">
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-40 px-2">
+                            <span>Deep Burnout Risk</span>
+                            <span>Optimal Flow</span>
+                        </div>
+                        <input type="range" id="govSlider" min="10" max="100" value="70" step="5" class="w-full">
+                    </div>
+                    
+                    <div id="gov-status" class="p-8 bg-green-500/5 border border-green-500/20 rounded-[2.5rem] flex items-center gap-6">
+                        <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-500">
+                            <i class="fas fa-shield-virus"></i>
+                        </div>
+                        <p class="text-[11px] font-bold leading-relaxed opacity-70 italic">"I only have 70% of what I think I have. Protecting the 30% buffer is the only way to prevent the Day 3 crash."</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-[4.5rem] p-12 lg:p-20 flex flex-col border-2 border-transparent">
+                <div class="mb-16">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30 mb-4">Biological Forecasting</h4>
+                    <h3 class="text-5xl font-black tracking-tighter">72-Hour Ripple</h3>
+                    <p class="text-xs opacity-40 mt-4 font-bold uppercase tracking-widest leading-relaxed">Energy spent today is borrowed from the next 48 hours.</p>
+                </div>
+                
+                <div class="flex-1 min-h-[300px] mb-12">
+                    <canvas id="rippleChart"></canvas>
+                </div>
+
+                <div class="grid grid-cols-3 gap-6">
+                    <div class="p-8 bg-black/5 dark:bg-white/5 rounded-[3rem] text-center border border-current/5 group hover:border-amber-500/30 transition-all">
+                        <span class="block text-[10px] font-black uppercase tracking-[0.4em] opacity-20 mb-4">Day 01</span>
+                        <span class="text-xs font-black uppercase tracking-widest text-amber-600 block mb-2">Adrenaline</span>
+                        <div class="w-full h-1 bg-amber-500/20 rounded-full overflow-hidden">
+                            <div class="w-full h-full bg-amber-500"></div>
+                        </div>
+                    </div>
+                    <div class="p-8 bg-amber-500/5 rounded-[3rem] text-center border border-amber-500/20 shadow-xl shadow-amber-500/5">
+                        <span class="block text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-4 font-serif italic">Day 02</span>
+                        <span class="text-xs font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 block mb-2">The Soup</span>
+                        <div class="w-full h-1 bg-current/10 rounded-full overflow-hidden">
+                            <div class="w-[40%] h-full bg-amber-500"></div>
+                        </div>
+                    </div>
+                    <div class="p-8 bg-black/5 dark:bg-white/5 rounded-[3rem] text-center border border-current/5 group hover:border-red-500/30 transition-all">
+                        <span class="block text-[10px] font-black uppercase tracking-[0.4em] opacity-20 mb-4">Day 03</span>
+                        <span class="text-xs font-black uppercase tracking-widest text-red-600 block mb-2">Debt Due</span>
+                        <div class="w-full h-1 bg-red-500/20 rounded-full overflow-hidden">
+                            <div class="w-[20%] h-full bg-red-500"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <p class="text-[9px] font-black uppercase tracking-[0.4em] opacity-20 text-center mt-12 italic">Warning: Adrenaline mimics recovery. Do not trust Day 1 euphoria.</p>
+            </div>
+        </section>
+      <section id="anchors" class="bg-stone-900 text-white dark:bg-black p-12 lg:p-32 rounded-[6rem] shadow-3xl flex flex-col min-h-[1200px] border border-stone-800 relative overflow-hidden">
+            
+            <div class="relative z-10 mb-32 max-w-4xl">
+                <div class="flex items-center gap-6 mb-10">
+                    <div class="h-px w-20 bg-blue-500"></div>
+                    <h4 class="text-[11px] font-black uppercase tracking-[0.8em] text-blue-400">The Foundation of Truth</h4>
+                </div>
+                <h3 class="text-8xl md:text-[10rem] font-display font-black tracking-tighter leading-[0.85] mb-12">Identity <br><span class="italic font-thin opacity-40">Anchors</span></h3>
+                <p class="text-xl opacity-40 leading-relaxed font-medium italic">When the biological storm lies to you about your value, your capacity, or your future—return to the architecture of Truth. This is not how you feel; this is what is real.</p>
+            </div>
+            
+            <div class="relative z-10 flex-1 overflow-y-auto pr-10 space-y-32 custom-scrollbar pb-20">
+                
+                <div class="space-y-16">
+                    <div class="flex items-center gap-8">
+                        <span class="text-5xl">👑</span>
+                        <div class="space-y-2">
+                            <h5 class="text-xs font-black uppercase tracking-[0.6em] text-blue-400">Core Architecture</h5>
+                            <div class="h-1 w-24 bg-blue-500/30 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div class="bg-white/5 p-16 rounded-[4.5rem] border border-white/5 hover:bg-white/10 transition-all duration-700 group cursor-default">
+                            <i class="fas fa-quote-left text-4xl text-blue-500/20 mb-8 block"></i>
+                            <p class="text-2xl font-light leading-relaxed italic mb-10 group-hover:scale-[1.01] transition-transform">"Before I formed you in the womb I knew you, before you were born I set you apart." <span class="text-[11px] block mt-6 opacity-30 font-mono font-normal tracking-normal not-italic uppercase tracking-widest">Jeremiah 1:5</span></p>
+                            <div class="pt-8 border-t border-white/5">
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 block mb-2">Anchor Point:</span>
+                                <p class="text-sm font-bold opacity-80 uppercase tracking-tight">My identity was established before my symptoms ever existed.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 p-16 rounded-[4.5rem] border border-white/5 hover:bg-white/10 transition-all duration-700 group cursor-default">
+                            <i class="fas fa-fingerprint text-4xl text-blue-500/20 mb-8 block"></i>
+                            <p class="text-2xl font-light leading-relaxed italic mb-10 group-hover:scale-[1.01] transition-transform">"I am fearfully and wonderfully made; Your works are wonderful, I know that full well." <span class="text-[11px] block mt-6 opacity-30 font-mono font-normal tracking-normal not-italic uppercase tracking-widest">Psalm 139:14</span></p>
+                            <div class="pt-8 border-t border-white/5">
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-blue-400 block mb-2">Anchor Point:</span>
+                                <p class="text-sm font-bold opacity-80 uppercase tracking-tight">This complex architecture is a masterpiece, not a manufacturing error.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-16">
+                    <div class="flex items-center gap-8">
+                        <span class="text-5xl">🕊️</span>
+                        <div class="space-y-2">
+                            <h5 class="text-xs font-black uppercase tracking-[0.6em] text-emerald-400">The Sound Mind</h5>
+                            <div class="h-1 w-24 bg-emerald-500/30 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                        <div class="bg-white/5 p-16 rounded-[4.5rem] border border-white/5 hover:bg-white/10 transition-all duration-700 group">
+                            <p class="text-2xl font-light leading-relaxed italic mb-10">"For God has not given me a spirit of fear, but of power, love, and a sound mind." <span class="text-[11px] block mt-6 opacity-30 font-mono font-normal tracking-normal not-italic uppercase tracking-widest">2 Timothy 1:7</span></p>
+                            <div class="pt-8 border-t border-white/5">
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 block mb-2">Anchor Point:</span>
+                                <p class="text-sm font-bold opacity-80 uppercase tracking-tight">Panic is an intruder. A 'Sound Mind' is my spiritual inheritance.</p>
+                            </div>
+                        </div>
+                        <div class="bg-white/5 p-16 rounded-[4.5rem] border border-white/5 hover:bg-white/10 transition-all duration-700 group">
+                            <p class="text-2xl font-light leading-relaxed italic mb-10">"You will keep him in perfect peace, whose mind is stayed on You." <span class="text-[11px] block mt-6 opacity-30 font-mono font-normal tracking-normal not-italic uppercase tracking-widest">Isaiah 26:3</span></p>
+                            <div class="pt-8 border-t border-white/5">
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 block mb-2">Anchor Point:</span>
+                                <p class="text-sm font-bold opacity-80 uppercase tracking-tight">Peace is not the absence of noise, but the presence of Focus.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-16">
+                    <div class="flex items-center gap-8">
+                        <span class="text-5xl">⛰️</span>
+                        <div class="space-y-2">
+                            <h5 class="text-xs font-black uppercase tracking-[0.6em] text-amber-500">Endurance Protocol</h5>
+                            <div class="h-1 w-24 bg-amber-500/30 rounded-full"></div>
+                        </div>
+                    </div>
+                    <div class="bg-white/5 p-16 rounded-[4.5rem] border border-white/5 hover:bg-white/10 transition-all duration-700 group">
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-16 items-center">
+                            <div class="lg:col-span-2">
+                                <p class="text-3xl font-light leading-relaxed italic mb-10">"My grace is sufficient for you, for my power is made perfect in weakness." <span class="text-[11px] block mt-6 opacity-30 font-mono font-normal tracking-normal not-italic uppercase tracking-widest">2 Corinthians 12:9</span></p>
+                            </div>
+                            <div class="lg:border-l lg:border-white/10 lg:pl-16">
+                                <span class="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500 block mb-4 italic">The Shutdown Protocol:</span>
+                                <p class="text-base font-bold opacity-80 uppercase tracking-tight leading-relaxed">When my energy hits 0%, God’s capacity becomes my operational floor.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <i class="fas fa-anchor absolute -right-48 -bottom-48 text-[650px] opacity-[0.015] pointer-events-none group-hover:rotate-12 transition-transform duration-[10s]"></i>
+        </section>
+      <section id="history" class="grid grid-cols-1 xl:grid-cols-12 gap-12">
+            <div class="xl:col-span-4 glass-panel rounded-[4.5rem] p-12 lg:p-16 border-2 border-transparent">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.5em] opacity-30 mb-8">Daily Maintenance</h4>
+                <h3 class="text-3xl font-black tracking-tighter mb-10">Integrity Audit</h3>
+                <div class="space-y-4" id="habit-audit-list">
+                    </div>
+            </div>
+
+            <div class="xl:col-span-8 glass-panel rounded-[4.5rem] p-12 lg:p-16 border-2 border-transparent">
+                <div class="flex justify-between items-center mb-10">
+                    <h3 class="text-3xl font-black tracking-tighter">System History</h3>
+                    <button onclick="clearHistory()" class="text-[9px] font-black uppercase tracking-[0.4em] opacity-20 hover:opacity-100 transition">Wipe Logs</button>
+                </div>
+                <div id="log-empty" class="py-20 text-center opacity-20 italic text-sm">No recent system logs detected.</div>
+                <div id="log-list" class="grid grid-cols-1 md:grid-cols-2 gap-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
+                    </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="mt-40 border-t border-current/5 py-20 px-10">
+        <div class="max-w-[120rem] mx-auto flex flex-col md:row justify-between items-center gap-10 opacity-30">
+            <span class="text-[9px] font-black uppercase tracking-[0.5em]">ARCHITECT_MIND_OS_v7.0.1_STABLE</span>
+            <div class="flex gap-10 text-[10px] font-bold">
+                <span>ENCRYPTED_LOCAL_STORAGE: ACTIVE</span>
+                <span>BIO_SYNC: STANDBY</span>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let isDark = false;
+        let breatheInterval;
+        let flowTimer;
+        let currentState = null;
+
+        // 1. INITIALIZATION
+        window.onload = () => {
+            updateClock();
+            setInterval(updateClock, 1000);
+            initCharts();
+            loadMemoryShield();
+            renderHistory();
+            renderHabits();
+        };
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('nav-clock').innerText = now.toTimeString().split(' ')[0];
+        }
+
+        function toggleDarkMode() {
+            isDark = !isDark;
+            document.body.classList.toggle('dark-mode');
+            document.getElementById('mode-text').innerText = isDark ? 'Sun Mode' : 'Fog Mode';
+            document.getElementById('mode-toggle-circle').style.left = isDark ? '24px' : '4px';
+            initCharts(); // Refresh charts for color contrast
+        }
+
+        // 2. TRIAGE ENGINE
+        const systemStates = {
+            yellow: { 
+                title: "Scattered Current (ADHD)", 
+                sub: "Executive Function Blockage",
+                advice: "Your dopamine receptors are firing asynchronously. Do not attempt deep focus yet. Start with a 'Low-Friction Sweep'—move 3 physical objects to their correct home.",
+                color: "text-yellow-600 dark:text-yellow-400",
+                bg: "border-yellow-500/30"
+            },
+            red: { 
+                title: "Emotional Heat (BPD)", 
+                sub: "Limbic System Overdrive",
+                advice: "The emotional thermometer is redlining. Logic is currently inaccessible. Use Cold-Water exposure (Face) immediately. This is a chemical event, not a character flaw.",
+                color: "text-red-600 dark:text-red-400",
+                bg: "border-red-500/30"
+            },
+            blue: { 
+                title: "Gravity Drop (MDD)", 
+                sub: "Energy Depletion Cycle",
+                advice: "Movement is the only medicine. 5 minutes of sunlight. No decisions allowed for the next 4 hours. Protect the 30% buffer.",
+                color: "text-blue-600 dark:text-blue-400",
+                bg: "border-blue-500/30"
+            }
+            // Add more states as needed...
+        };
+
+        function activateSystemState(stateKey) {
+            const data = systemStates[stateKey];
+            const dash = document.getElementById('triage-dashboard');
+            
+            // Log the event
+            logState(stateKey, data ? data.color : 'text-emerald-500');
+
+            if(!data) { // Default/Green state
+                dash.classList.add('hidden');
+                document.getElementById('active-state-indicator').innerText = "System: Clear";
+                return;
+            }
+
+            dash.classList.remove('hidden');
+            dash.className = `glass-panel rounded-[4.5rem] p-12 lg:p-24 shadow-2xl border-2 transition-all duration-1000 relative overflow-hidden ${data.bg}`;
+            
+            dash.innerHTML = `
+                <div class="relative z-10">
+                    <h4 class="text-[11px] font-black uppercase tracking-[0.5em] opacity-30 mb-4">Protocol Active</h4>
+                    <h3 class="text-6xl font-black tracking-tighter mb-6 ${data.color}">${data.title}</h3>
+                    <p class="text-xs font-mono font-bold uppercase opacity-40 mb-10 tracking-[0.3em]">${data.sub}</p>
+                    <div class="h-px w-full bg-current opacity-10 mb-10"></div>
+                    <p class="text-2xl font-medium leading-relaxed max-w-4xl">${data.advice}</p>
+                </div>
+            `;
+            document.getElementById('active-state-indicator').innerText = `Active: ${data.title}`;
+            dash.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // 3. BIOLOGICAL TOOLS
+        function startBreathing() {
+            let count = 0;
+            const timerDisplay = document.getElementById('breathe-timer');
+            const instruction = document.getElementById('breathe-instruction');
+            const circle = document.getElementById('breathe-circle');
+            let secondsLeft = 90;
+
+            clearInterval(breatheInterval);
+            breatheInterval = setInterval(() => {
+                secondsLeft--;
+                timerDisplay.innerText = secondsLeft;
+                
+                const cycle = secondsLeft % 19;
+                if(cycle > 15) { instruction.innerText = "Hold"; circle.style.transform = "scale(1.3)"; }
+                else if(cycle > 8) { instruction.innerText = "Exhale"; circle.style.transform = "scale(0.8)"; }
+                else { instruction.innerText = "Inhale"; circle.style.transform = "scale(1.3)"; }
+
+                if(secondsLeft <= 0) stopBreathing();
+            }, 1000);
+        }
+
+        function stopBreathing() {
+            clearInterval(breatheInterval);
+            document.getElementById('breathe-instruction').innerText = "Ready";
+            document.getElementById('breathe-timer').innerText = "90";
+            document.getElementById('breathe-circle').style.transform = "scale(1)";
+        }
+
+        let groundingStep = 0;
+        function nextGroundingStep() {
+            groundingStep++;
+            if(groundingStep > 5) groundingStep = 1;
+            
+            for(let i=1; i<=5; i++) {
+                const el = document.getElementById(`g-step-${i}`);
+                el.className = (6-i) === groundingStep ? 'step-active flex items-center gap-10 p-8 rounded-[3rem] bg-current/5 border border-current/20 scale-105 transition-all' : 'step-inactive flex items-center gap-10 p-8 rounded-[3rem] opacity-20';
+            }
+            document.getElementById('btn-grounding').innerText = `Step ${groundingStep} Complete ->`;
+        }
+
+        // 4. CHARTING ENGINE
+        function initCharts() {
+            const ctxGov = document.getElementById('govChart').getContext('2d');
+            const ctxRipple = document.getElementById('rippleChart').getContext('2d');
+            const accent = isDark ? '#e2e2e2' : '#1c1917';
+
+            if(window.govChart) window.govChart.destroy();
+            window.govChart = new Chart(ctxGov, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [70, 30],
+                        backgroundColor: [accent, 'rgba(128,128,128,0.1)'],
+                        borderWidth: 0,
+                        circumference: 180,
+                        rotation: 270
+                    }]
+                },
+                options: { cutout: '85%', plugins: { legend: { display: false } } }
+            });
+
+            if(window.rippleChart) window.rippleChart.destroy();
+            window.rippleChart = new Chart(ctxRipple, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3'],
+                    datasets: [{
+                        label: 'Capacity',
+                        data: [100, 45, 15],
+                        borderColor: accent,
+                        borderWidth: 4,
+                        tension: 0.4,
+                        fill: false
+                    }]
+                },
+                options: { 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false } } }
+                }
+            });
+        }
+
+        // 5. DATA PERSISTENCE
+        function saveMemoryShield() {
+            const data = {
+                fox: document.getElementById('fox-input').value,
+                rabbits: document.getElementById('rabbit-input').value
+            };
+            localStorage.setItem('arch_shield', JSON.stringify(data));
+        }
+
+        function loadMemoryShield() {
+            const saved = JSON.parse(localStorage.getItem('arch_shield'));
+            if(saved) {
+                document.getElementById('fox-input').value = saved.fox || "";
+                document.getElementById('rabbit-input').value = saved.rabbits || "";
+            }
+        }
+
+        function logState(name, color) {
+            let logs = JSON.parse(localStorage.getItem('arch_logs_v7')) || [];
+            logs.unshift({ name, color, time: new Date().toLocaleTimeString() });
+            localStorage.setItem('arch_logs_v7', JSON.stringify(logs.slice(0, 20)));
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const logs = JSON.parse(localStorage.getItem('arch_logs_v7')) || [];
+            const list = document.getElementById('log-list');
+            if(logs.length > 0) document.getElementById('log-empty').classList.add('hidden');
+            list.innerHTML = logs.map(l => `
+                <div class="p-6 rounded-3xl bg-black/5 dark:bg-white/5 border border-current/5 flex justify-between items-center">
+                    <span class="text-[10px] font-mono opacity-40">${l.time}</span>
+                    <span class="text-[10px] font-black uppercase tracking-widest ${l.color}">${l.name}</span>
+                </div>
+            `).join('');
+        }
+
+        function copyFlare(id) {
+            const text = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(text);
+            const btn = event.currentTarget;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<span>Copied to Clipboard</span>';
+            setTimeout(() => btn.innerHTML = original, 2000);
+        }// Register the Service Worker for Offline Use
+if ('service worker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('Offline System: Active'))
+            .catch(err => console.log('Offline System: Failed', err));
+    });
+} // --- HABIT INTEGRITY ENGINE (ADD THIS SECTION) ---
+        const dailyHabits = [
+            { id: 'h1', label: 'Biological Fuel', desc: 'Protein-heavy morning intake' },
+            { id: 'h2', label: 'Light Exposure', desc: '10m Natural sunlight / Verilux' },
+            { id: 'h3', label: 'Hydration v1', desc: 'First 32oz water consumed' },
+            { id: 'h4', label: 'Dopamine Fast', desc: 'No scrolling for first 60m' },
+            { id: 'h5', label: 'The Reading', desc: 'Identity Anchor meditation' }
+        ];
+
+        function renderHabits() {
+            const container = document.getElementById('habit-audit-list');
+            if (!container) return; // Safety check
+            
+            const saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            
+            let completed = 0;
+            container.innerHTML = dailyHabits.map(h => {
+                const isChecked = saved[h.id] ? 'checked' : '';
+                if(saved[h.id]) completed++;
+                return `
+                    <label class="flex items-center gap-6 p-6 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-transparent hover:border-current/10 transition-all cursor-pointer group mb-4">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" onchange="toggleHabit('${h.id}')" ${isChecked} 
+                                class="appearance-none w-6 h-6 rounded-full border-2 border-current/20 checked:bg-current transition-all">
+                        </div>
+                        <div class="flex-1">
+                            <span class="block text-[11px] font-black uppercase tracking-widest">${h.label}</span>
+                            <span class="text-[9px] opacity-40 font-mono uppercase">${h.desc}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            // Add Integrity Progress Bar
+            const percent = (completed / dailyHabits.length) * 100;
+            const progressHTML = `
+                <div class="mt-8 pt-8 border-t border-current/5">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="text-[9px] font-black uppercase opacity-30 tracking-widest">Integrity Score</span>
+                        <span class="text-[10px] font-mono font-bold">${Math.round(percent)}%</span>
+                    </div>
+                    <div class="w-full h-1 bg-current/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-current transition-all duration-1000" style="width: ${percent}%"></div>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', progressHTML);
+        }
+
+        function toggleHabit(id) {
+            let saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            saved[id] = !saved[id];
+            localStorage.setItem('arch_habits', JSON.stringify(saved));
+            renderHabits();
+            
+            if(Object.values(saved).filter(Boolean).length === dailyHabits
+    </script>
+</body>
+</html>
+        ];
+
+        function renderHabits() {
+            const container = document.getElementById('habit-audit-list');
+            if (!container) return;
+            
+            const saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            
+            let completed = 0;
+            container.innerHTML = dailyHabits.map(h => {
+                const isChecked = saved[h.id] ? 'checked' : '';
+                if(saved[h.id]) completed++;
+                return `
+                    <label class="flex items-center gap-6 p-6 rounded-[2rem] bg-black/5 dark:bg-white/5 border border-transparent hover:border-current/10 transition-all cursor-pointer group mb-4">
+                        <input type="checkbox" onchange="toggleHabit('${h.id}')" ${isChecked} 
+                            class="w-6 h-6">
+                        <div>
+                            <span class="block text-[11px] font-black uppercase">${h.label}</span>
+                            <span class="text-[9px] opacity-40">${h.desc}</span>
+                        </div>
+                    </label>
+                `;
+            }).join('');
+
+            const percent = (completed / dailyHabits.length) * 100;
+
+            container.insertAdjacentHTML('beforeend', `
+                <div class="mt-6">
+                    <div class="text-xs mb-2">Integrity: ${Math.round(percent)}%</div>
+                    <div class="w-full h-2 bg-gray-200">
+                        <div class="h-2 bg-green-500" style="width:${percent}%"></div>
+                    </div>
+                </div>
+            `);
+        }
+
+        function toggleHabit(id) {
+            let saved = JSON.parse(localStorage.getItem('arch_habits')) || {};
+            saved[id] = !saved[id];
+            localStorage.setItem('arch_habits', JSON.stringify(saved));
+            renderHabits();
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('arch_logs_v7');
+            renderHistory();
+        }
+
+        // 🔥 SIMPLE WORKING WIDGET FIX
+        function quickState(state) {
+            activateSystemState(state);
+        }
+
+    </script>
 </body>
 </html>
