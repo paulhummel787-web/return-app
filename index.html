@@ -1097,7 +1097,10 @@ function triggerState(state) {
   activateSystemState(state);
         // --- END HABIT ENGINE ---// 
 } function quickState(state) {
-
+button {
+  position: relative;
+  z-index: 9999;
+}
   const actions = {
     yellow: "Slow down. One thing.",
     red: "STOP. Breathe now.",
