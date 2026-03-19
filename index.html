@@ -39,12 +39,7 @@
         }
 
         body 
-        { <body>
-
-<button onclick="testNotification()" 
-style="position:fixed;top:20px;right:20px;z-index:999;background:red;color:white;padding:10px;">
-CLICK ME
-</button>
+        { 
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-base);
             color: var(--text-main);
@@ -902,17 +897,6 @@ if ("serviceWorker" in navigator) {
       .then(reg => console.log("SW registered:", reg.scope))
       .catch(err => console.log("SW failed:", err));
   });
-}
-        function testNotification() {
-    Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-            new Notification("It works 🎉", {
-                body: "Your app can send notifications."
-            });
-        } else {
-            alert("You blocked notifications");
-        }
-    });
 }
 </script>
 </body>
