@@ -897,6 +897,17 @@ if ("serviceWorker" in navigator) {
       .catch(err => console.log("SW failed:", err));
   });
 }
+        function testNotification() {
+    Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+            new Notification("It works 🎉", {
+                body: "Your app can send notifications."
+            });
+        } else {
+            alert("You blocked notifications");
+        }
+    });
+}
 </script>
 </body>
 </html>
